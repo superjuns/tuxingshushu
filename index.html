@@ -1,0 +1,3068 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>平面图形数数小游戏</title>
+    <style>
+        /* ===== 全部样式 ===== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Segoe UI", "Microsoft YaHei", sans-serif;
+        }
+        body {
+            min-height: 100vh;
+            background: linear-gradient(145deg, #f0f4fa 0%, #d9e2ef 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(6px);
+            border-radius: 32px;
+            padding: 20px 20px 25px;
+            box-shadow: 0 20px 40px rgba(0, 20, 40, 0.25);
+            position: relative;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+            gap: 12px;
+            flex-wrap: nowrap;
+        }
+        .header-left {
+            flex: 0 0 auto;
+            min-width: 100px;
+        }
+        .header-left h1 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a2a3a;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+        .header-center {
+            flex: 1 1 auto;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: nowrap;
+            justify-content: center;
+        }
+        .header-center .mode-badge {
+            background: #27ae60;
+            color: #fff;
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 600;
+            display: none;
+            white-space: nowrap;
+        }
+        .header-center .mode-badge.active {
+            display: inline-block;
+        }
+        .header-center .timer-badge {
+            background: #1e2f3f;
+            color: #ffd966;
+            padding: 4px 16px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            display: none;
+        }
+        .header-center .timer-badge.active {
+            display: inline-block;
+        }
+        .header-right {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            min-width: 100px;
+        }
+        .score-badge {
+            background: #1e2f3f;
+            color: #ffd966;
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-size: 18px;
+            font-weight: 600;
+            box-shadow: 0 4px 0 #0b1a26;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .score-badge span {
+            color: #ffffff;
+            font-weight: 300;
+            margin-right: 4px;
+        }
+        .score-badge .score-value {
+            color: #ffd966;
+            font-weight: 700;
+        }
+        .btn-mode {
+            padding: 4px 16px;
+            font-size: 13px;
+            font-weight: 600;
+            border: none;
+            border-radius: 40px;
+            background: #8e44ad;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.15s;
+            touch-action: manipulation;
+            box-shadow: 0 3px 0 #5a2d7a;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .btn-mode:hover {
+            background: #9b59b6;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 0 #5a2d7a;
+        }
+        .btn-mode:active {
+            transform: translateY(2px);
+            box-shadow: 0 1px 0 #5a2d7a;
+        }
+        .btn-mode.exam-active {
+            background: #27ae60;
+            box-shadow: 0 3px 0 #1a7a42;
+        }
+        .btn-mode.exam-active:hover {
+            background: #2ecc71;
+            box-shadow: 0 5px 0 #1a7a42;
+        }
+        #gameArea {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 760 / 480;
+            background: #ffffff;
+            border-radius: 16px;
+            border: 2px solid rgba(60, 80, 100, 0.15);
+            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.03);
+            overflow: hidden;
+            margin-bottom: 18px;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        #sceneWrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 760px;
+            height: 480px;
+            transform-origin: top left;
+            pointer-events: auto;
+        }
+        .shape {
+            position: absolute;
+            transition: transform 0.15s ease;
+            will-change: transform;
+            cursor: pointer;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .shape:hover {
+            transform: scale(1.04) !important;
+            z-index: 10;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12));
+        }
+        .shape:active {
+            transform: scale(0.96) !important;
+        }
+        .shape-highlight-green {
+            outline: 4px solid #00cc44 !important;
+            outline-offset: 3px !important;
+            z-index: 20 !important;
+            filter: drop-shadow(0 0 8px rgba(0, 204, 68, 0.7)) !important;
+        }
+        .shape-highlight-red {
+            outline: 4px solid #ff0000 !important;
+            outline-offset: 3px !important;
+            z-index: 20 !important;
+            filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.7)) !important;
+        }
+        .triangle-wrapper.shape-highlight-green,
+        .triangle-wrapper.shape-highlight-red {
+            outline: 4px solid #00cc44 !important;
+            outline-offset: 3px !important;
+            z-index: 20 !important;
+            filter: drop-shadow(0 0 8px rgba(0, 204, 68, 0.7)) !important;
+        }
+        .triangle-wrapper.shape-highlight-red {
+            outline: 4px solid #ff0000 !important;
+            outline-offset: 3px !important;
+            filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.7)) !important;
+        }
+        .rect {
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 0;
+        }
+        .square {
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            border-radius: 0;
+        }
+        .circle {
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .triangle {
+            width: 0 !important;
+            height: 0 !important;
+            background: none !important;
+            filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.08));
+        }
+        .triangle:hover {
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.15));
+        }
+        .para {
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 0;
+        }
+        .count-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 12px rgba(0, 0, 0, 0.7), 0 0 4px rgba(0, 0, 0, 0.8), 0 2px 8px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            line-height: 1;
+            z-index: 5;
+            font-family: "Segoe UI", sans-serif;
+            display: none;
+        }
+        .triangle-wrapper .count-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 28px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 0 12px rgba(0, 0, 0, 0.7), 0 0 4px rgba(0, 0, 0, 0.8), 0 2px 8px rgba(0, 0, 0, 0.5);
+            pointer-events: none;
+            line-height: 1;
+            z-index: 5;
+            font-family: "Segoe UI", sans-serif;
+            display: none;
+        }
+        .panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #ffffffd6;
+            backdrop-filter: blur(4px);
+            padding: 14px 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+        }
+        .panel-row {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 14px;
+            width: 100%;
+        }
+        .question-box {
+            flex: 1 1 200px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a2a3a;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .question-box .shape-label {
+            display: inline-block;
+            background: #eef3f9;
+            padding: 2px 16px;
+            border-radius: 30px;
+            color: #1f3a57;
+            font-weight: 700;
+            font-size: 20px;
+        }
+        .question-box .round-hint {
+            font-size: 15px;
+            font-weight: 400;
+            color: #5a6a7e;
+            background: #eef3f9;
+            padding: 2px 12px;
+            border-radius: 30px;
+        }
+        .question-box .btn-mode {
+            margin-left: 2px;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            flex: 1 1 auto;
+            justify-content: flex-end;
+        }
+        .input-group input {
+            width: 90px;
+            padding: 8px 12px;
+            font-size: 17px;
+            font-weight: 500;
+            border: 2px solid #cddae9;
+            border-radius: 40px;
+            background: #f9fcff;
+            transition: 0.2s;
+            outline: none;
+            text-align: center;
+        }
+        .input-group input:focus {
+            border-color: #3b7eb0;
+            background: #ffffff;
+            box-shadow: 0 0 0 4px rgba(59, 126, 176, 0.15);
+        }
+        .input-group input::placeholder {
+            font-weight: 400;
+            color: #a0b4c9;
+            font-size: 14px;
+        }
+        .btn {
+            padding: 8px 20px;
+            font-size: 17px;
+            font-weight: 600;
+            border: none;
+            border-radius: 40px;
+            background: #2c7cb0;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 4px 0 #1a4f72;
+            letter-spacing: 0.3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            touch-action: manipulation;
+        }
+        .btn:hover {
+            background: #3a8fc7;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #1a4f72;
+        }
+        .btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #1a4f72;
+        }
+        .btn-secondary {
+            background: #6c7e94;
+            box-shadow: 0 4px 0 #3f4d5e;
+        }
+        .btn-secondary:hover {
+            background: #7f92aa;
+        }
+        .btn-next {
+            background: #27ae60;
+            box-shadow: 0 4px 0 #1a7a42;
+        }
+        .btn-next:hover {
+            background: #2ecc71;
+            box-shadow: 0 6px 0 #1a7a42;
+        }
+        .btn-next:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #1a7a42;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: 0 4px 0 #1a4f72 !important;
+        }
+        .btn-next:disabled {
+            box-shadow: 0 4px 0 #1a7a42 !important;
+        }
+        .btn-secondary:disabled {
+            box-shadow: 0 4px 0 #3f4d5e !important;
+        }
+        .num-keypad {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 8px;
+            padding: 6px 0 2px 0;
+            width: 100%;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+        .num-keypad .num-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            font-size: 20px;
+            font-weight: 600;
+            background: #e8edf4;
+            color: #1a2a3a;
+            cursor: pointer;
+            transition: all 0.12s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 48px;
+        }
+        .num-keypad .num-btn:active {
+            transform: scale(0.92);
+            background: #c8d4e4;
+        }
+        .num-keypad .num-btn.num-0 {
+            flex: 0 0 48px;
+        }
+        .num-keypad .num-btn.backspace {
+            background: #d5dce6;
+            font-size: 22px;
+            color: #2c3e50;
+        }
+        .num-keypad .num-btn.backspace:active {
+            background: #bcc6d4;
+        }
+        .num-keypad .num-btn.num-clear {
+            background: #e8b4b4;
+            color: #7a2e2e;
+            font-size: 16px;
+            font-weight: 700;
+        }
+        .num-keypad .num-btn.num-clear:active {
+            background: #dba0a0;
+        }
+        .result {
+            font-size: 17px;
+            font-weight: 600;
+            padding: 6px 0 4px 0;
+            text-align: center;
+            width: 100%;
+            min-height: 36px;
+            line-height: 1.4;
+        }
+        .result.correct {
+            color: #1f8b4c;
+        }
+        .result.wrong {
+            color: #c73e3e;
+        }
+        .result.info {
+            color: #3a6d8c;
+        }
+        .result.finished {
+            color: #2c3e50;
+            font-size: 20px;
+            font-weight: 700;
+        }
+        .result.try-again {
+            color: #e67e22;
+            font-weight: 700;
+        }
+        .result.score-info {
+            color: #2980b9;
+            font-weight: 700;
+        }
+        .result.hint {
+            color: #8e44ad;
+            font-weight: 600;
+            font-size: 15px;
+        }
+        .result.skipped {
+            color: #e67e22;
+            font-weight: 600;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+        .modal-overlay.open {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-box {
+            background: #ffffff;
+            border-radius: 28px;
+            padding: 36px 40px 32px;
+            max-width: 420px;
+            width: 90%;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        .modal-box h2 {
+            font-size: 24px;
+            color: #1a2a3a;
+            margin-bottom: 8px;
+        }
+        .modal-box .sub {
+            color: #6c7e94;
+            font-size: 15px;
+            margin-bottom: 24px;
+        }
+        .modal-box .field {
+            text-align: left;
+            margin-bottom: 18px;
+        }
+        .modal-box .field label {
+            display: block;
+            font-weight: 600;
+            color: #1a2a3a;
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+        .modal-box .field select,
+        .modal-box .field input {
+            width: 100%;
+            padding: 10px 14px;
+            font-size: 16px;
+            border: 2px solid #cddae9;
+            border-radius: 12px;
+            background: #f9fcff;
+            outline: none;
+            transition: 0.2s;
+        }
+        .modal-box .field select:focus,
+        .modal-box .field input:focus {
+            border-color: #3b7eb0;
+            box-shadow: 0 0 0 4px rgba(59, 126, 176, 0.12);
+        }
+        .modal-box .btn-start {
+            width: 100%;
+            padding: 12px;
+            font-size: 18px;
+            font-weight: 700;
+            border: none;
+            border-radius: 40px;
+            background: #27ae60;
+            color: #fff;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 4px 0 #1a7a42;
+        }
+        .modal-box .btn-start:hover {
+            background: #2ecc71;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #1a7a42;
+        }
+        .modal-box .btn-start:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 #1a7a42;
+        }
+        .modal-box .btn-cancel {
+            margin-top: 12px;
+            padding: 10px;
+            width: 100%;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 40px;
+            background: #e8edf4;
+            color: #4a5a6e;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+        .modal-box .btn-cancel:hover {
+            background: #d5dce6;
+        }
+        .score-modal .modal-box {
+            max-width: 480px;
+        }
+        .score-modal .score-detail {
+            text-align: left;
+            background: #f0f4fa;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 12px 0 20px;
+        }
+        .score-modal .score-detail .item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            font-size: 15px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .score-modal .score-detail .item:last-child {
+            border-bottom: none;
+        }
+        .score-modal .total-score {
+            font-size: 36px;
+            font-weight: 800;
+            color: #1a2a3a;
+            margin: 8px 0;
+        }
+        .score-modal .total-score span {
+            color: #27ae60;
+        }
+
+        /* ===== 排行榜样式 ===== */
+        .leaderboard {
+            margin-top: 18px;
+            background: #ffffffd6;
+            backdrop-filter: blur(4px);
+            padding: 14px 18px;
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.04);
+        }
+        .leaderboard-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .leaderboard-header h3 {
+            font-size: 18px;
+            color: #1a2a3a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .leaderboard-header .refresh-btn {
+            background: none;
+            border: none;
+            color: #3a6d8c;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 12px;
+            border-radius: 20px;
+            background: #eef3f9;
+            transition: 0.15s;
+        }
+        .leaderboard-header .refresh-btn:hover {
+            background: #d5dce6;
+        }
+        .leaderboard-table-wrap {
+            max-height: 260px;
+            overflow-y: auto;
+            border-radius: 12px;
+        }
+        .leaderboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        .leaderboard-table th {
+            background: #1e2f3f;
+            color: #ffd966;
+            padding: 8px 12px;
+            text-align: left;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .leaderboard-table td {
+            padding: 7px 12px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            color: #1a2a3a;
+        }
+        .leaderboard-table tr:nth-child(even) td {
+            background: #f8faff;
+        }
+        .leaderboard-table .rank-1 td:first-child {
+            color: #ffd700;
+            font-weight: 700;
+        }
+        .leaderboard-table .rank-2 td:first-child {
+            color: #c0c0c0;
+            font-weight: 700;
+        }
+        .leaderboard-table .rank-3 td:first-child {
+            color: #cd7f32;
+            font-weight: 700;
+        }
+        .leaderboard-empty {
+            text-align: center;
+            color: #6c7e94;
+            padding: 20px 0;
+            font-size: 14px;
+        }
+        .leaderboard-loading {
+            text-align: center;
+            color: #6c7e94;
+            padding: 12px 0;
+            font-size: 14px;
+        }
+
+        /* ===== 响应式设计 ===== */
+        @media (max-width: 700px) {
+            .container { padding: 12px 12px 18px; }
+            .header { flex-wrap: nowrap; gap: 6px; }
+            .header-left { flex: 0 0 auto; min-width: auto; }
+            .header-left h1 { font-size: 18px; white-space: nowrap; }
+            .header-center { flex: 1 1 auto; gap: 4px; }
+            .header-center .mode-badge { font-size: 11px; padding: 2px 10px; }
+            .header-center .timer-badge { font-size: 11px; padding: 2px 10px; }
+            .header-right { flex: 0 0 auto; min-width: auto; }
+            .score-badge { font-size: 14px; padding: 4px 12px; }
+            .panel { padding: 12px 14px; gap: 10px; }
+            .panel-row { gap: 8px 10px; }
+            .question-box { font-size: 16px; flex: 1 1 100%; justify-content: center; }
+            .question-box .shape-label { font-size: 18px; }
+            .question-box .btn-mode { font-size: 12px; padding: 3px 12px; }
+            .input-group { justify-content: center; flex: 1 1 100%; }
+            .input-group input { width: 76px; font-size: 16px; padding: 6px 10px; }
+            .btn { padding: 6px 16px; font-size: 15px; }
+            .num-keypad { gap: 6px; max-width: 360px; }
+            .num-keypad .num-btn { width: 42px; height: 42px; font-size: 18px; flex: 0 0 42px; }
+            .num-keypad .num-btn.num-0 { flex: 0 0 42px; }
+            .result { font-size: 15px; min-height: 30px; padding: 4px 0 2px 0; }
+            .count-label, .triangle-wrapper .count-label { font-size: 22px; }
+            .modal-box { padding: 28px 24px; }
+            .modal-box h2 { font-size: 20px; }
+            .question-box .round-hint { font-size: 13px; }
+            .leaderboard-table { font-size: 12px; }
+            .leaderboard-table th, .leaderboard-table td { padding: 5px 8px; }
+        }
+
+        @media (max-width: 450px) {
+            .container { padding: 8px 8px 14px; border-radius: 20px; }
+            .header { flex-wrap: nowrap; gap: 4px; }
+            .header-left h1 { font-size: 15px; }
+            .header-center .mode-badge { font-size: 10px; padding: 2px 6px; }
+            .header-center .timer-badge { font-size: 10px; padding: 2px 6px; }
+            .score-badge { font-size: 12px; padding: 3px 8px; }
+            .panel { padding: 10px 10px; gap: 8px; }
+            .question-box { font-size: 14px; flex-wrap: wrap; justify-content: center; }
+            .question-box .shape-label { font-size: 16px; padding: 0 10px; }
+            .question-box .btn-mode { font-size: 11px; padding: 2px 10px; }
+            .input-group input { width: 64px; font-size: 14px; padding: 5px 8px; }
+            .btn { font-size: 13px; padding: 5px 12px; }
+            .num-keypad { gap: 5px; max-width: 300px; }
+            .num-keypad .num-btn { width: 36px; height: 36px; font-size: 15px; flex: 0 0 36px; }
+            .num-keypad .num-btn.num-0 { flex: 0 0 36px; }
+            .num-keypad .num-btn.backspace { font-size: 18px; }
+            .result { font-size: 14px; min-height: 26px; padding: 3px 0 2px 0; }
+            .count-label, .triangle-wrapper .count-label { font-size: 18px; }
+            .modal-box { padding: 20px 16px; }
+            .modal-box h2 { font-size: 18px; }
+            .question-box .round-hint { font-size: 12px; }
+            .leaderboard-table { font-size: 11px; }
+            .leaderboard-table th, .leaderboard-table td { padding: 4px 6px; }
+        }
+
+        @media (pointer: coarse) {
+            .shape:hover { transform: scale(1) !important; z-index: auto; filter: none; }
+            .shape:active { transform: scale(0.96) !important; z-index: 10; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.15)); }
+            .num-keypad .num-btn:hover { background: #e8edf4; transform: none; }
+            .num-keypad .num-btn.backspace:hover { background: #d5dce6; }
+        }
+
+        /* 第5轮轮廓模式样式 */
+        .shape-outline {
+            border: 3px solid #000000 !important;
+            background: transparent !important;
+            box-sizing: border-box;
+        }
+        .shape-outline:hover {
+            transform: scale(1.04) !important;
+            z-index: 10;
+            filter: drop-shadow(0 4px 8px rgba(0,0,0,0.12));
+        }
+        .shape-outline:active {
+            transform: scale(0.96) !important;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- 头部：左（标题） 中（状态徽章） 右（分数） -->
+        <div class="header">
+            <div class="header-left">
+                <h1>📐 图形数数</h1>
+            </div>
+            <div class="header-center">
+                <span class="mode-badge" id="modeBadge">📝 答题模式</span>
+                <span class="timer-badge" id="timerBadge">⏱️ 00:00</span>
+            </div>
+            <div class="header-right">
+                <div class="score-badge">
+                    <span>🏆</span>
+                    <span class="score-value" id="scoreDisplay">0 / 100</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 画布 -->
+        <div id="gameArea">
+            <div id="sceneWrapper"></div>
+        </div>
+
+        <!-- 控制面板 -->
+        <div class="panel">
+            <div class="panel-row">
+                <!-- 问题行：包含问题描述 + 答题模式按钮 -->
+                <div class="question-box" id="questionBox">
+                    <span>图中</span>
+                    <span class="shape-label" id="shapeNameLabel">正方形</span>
+                    <span>有几个？</span>
+                    <span class="round-hint" id="roundHint">第 1/5 轮</span>
+                    <button class="btn-mode" id="modeBtn">📝 答题模式</button>
+                </div>
+            </div>
+
+            <div class="panel-row">
+                <div class="input-group">
+                    <input type="number" id="answerInput" placeholder="数字" min="0" inputmode="numeric" />
+                    <button class="btn" id="submitBtn">✓ 提交</button>
+                    <button class="btn btn-next" id="nextBtn">➡ 下一轮</button>
+                    <button class="btn btn-secondary" id="resetBtn">⟳ 重玩</button>
+                </div>
+            </div>
+
+            <div class="result" id="resultMessage">🎯 点击图形编号（再次点击取消），数一数</div>
+
+            <div class="num-keypad" id="numKeypad">
+                <button class="num-btn" data-value="1">1</button>
+                <button class="num-btn" data-value="2">2</button>
+                <button class="num-btn" data-value="3">3</button>
+                <button class="num-btn" data-value="4">4</button>
+                <button class="num-btn" data-value="5">5</button>
+                <button class="num-btn" data-value="6">6</button>
+                <button class="num-btn" data-value="7">7</button>
+                <button class="num-btn" data-value="8">8</button>
+                <button class="num-btn" data-value="9">9</button>
+                <button class="num-btn num-0" data-value="0">0</button>
+                <button class="num-btn backspace" id="backspaceBtn">⌫</button>
+            </div>
+        </div>
+
+        <!-- ===== 排行榜 ===== -->
+        <div class="leaderboard" id="leaderboard">
+            <div class="leaderboard-header">
+                <h3>🏅 排行榜</h3>
+                <button class="refresh-btn" id="refreshLeaderboardBtn">⟳ 刷新</button>
+            </div>
+            <div class="leaderboard-table-wrap" id="leaderboardWrap">
+                <div class="leaderboard-loading" id="leaderboardLoading">⏳ 加载中...</div>
+                <div class="leaderboard-empty" id="leaderboardEmpty" style="display:none;">暂无记录，快来挑战吧！</div>
+                <table class="leaderboard-table" id="leaderboardTable" style="display:none;">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;">#</th>
+                            <th>姓名</th>
+                            <th style="width:60px;">班级</th>
+                            <th style="width:60px;">分数</th>
+                            <th style="width:70px;">用时</th>
+                        </tr>
+                    </thead>
+                    <tbody id="leaderboardBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 答题模式弹窗 -->
+    <div class="modal-overlay" id="modeModal">
+        <div class="modal-box">
+            <h2>📝 答题模式</h2>
+            <p class="sub">请输入您的班级和姓名，开始5轮答题</p>
+            <div class="field">
+                <label for="classSelect">班级</label>
+                <select id="classSelect">
+                    <option value="1班">1班</option>
+                    <option value="2班">2班</option>
+                    <option value="3班">3班</option>
+                    <option value="4班">4班</option>
+                    <option value="5班">5班</option>
+                    <option value="6班">6班</option>
+                    <option value="7班">7班</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="nameInput">姓名</label>
+                <input type="text" id="nameInput" placeholder="请输入您的姓名" maxlength="10" />
+            </div>
+            <button class="btn-start" id="startExamBtn">开始答题</button>
+            <button class="btn-cancel" id="cancelExamBtn">取消</button>
+        </div>
+    </div>
+
+    <!-- 成绩弹窗 -->
+    <div class="modal-overlay score-modal" id="scoreModal">
+        <div class="modal-box">
+            <h2>📊 答题完成！</h2>
+            <div class="score-detail" id="scoreDetail">
+                <div class="item"><span>👤 姓名</span><span id="resultName">-</span></div>
+                <div class="item"><span>🏫 班级</span><span id="resultClass">-</span></div>
+                <div class="item"><span>📝 正确题数</span><span id="resultCorrect">0 / 5</span></div>
+                <div class="item"><span>⏱️ 用时</span><span id="resultTime">00:00</span></div>
+            </div>
+            <div class="total-score">总分：<span id="resultTotal">0</span> / 100</div>
+            <button class="btn-start" id="closeScoreBtn" style="margin-top:16px;">👍 太棒了！</button>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // ============================================================
+            //  0. 内置图案数据（后备，当API不可用时使用）
+            // ============================================================
+            const BUILTIN_PATTERNS = [
+                // 1. 小房子
+                {
+                    name: '🏠 小房子',
+                    shapes: [
+                        { type: '长方形', x: 250, y: 220, w: 180, h: 120, angle: 0 },
+                        { type: '三角形', x: 250, y: 200, scale: 1.6, angle: 0 },
+                        { type: '正方形', x: 310, y: 250, size: 40, angle: 0 },
+                        { type: '正方形', x: 360, y: 250, size: 40, angle: 0 },
+                        { type: '圆形', x: 270, y: 160, r: 20, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '三角形': 1, '正方形': 2, '圆形': 1, '平行四边形': 0 }
+                },
+                // 2. 火车
+                {
+                    name: '🚂 火车',
+                    shapes: [
+                        { type: '长方形', x: 200, y: 250, w: 250, h: 80, angle: 0 },
+                        { type: '长方形', x: 330, y: 180, w: 80, h: 70, angle: 0 },
+                        { type: '正方形', x: 220, y: 270, size: 30, angle: 0 },
+                        { type: '正方形', x: 300, y: 270, size: 30, angle: 0 },
+                        { type: '正方形', x: 370, y: 270, size: 30, angle: 0 },
+                        { type: '圆形', x: 240, y: 300, r: 25, angle: 0 },
+                        { type: '圆形', x: 340, y: 300, r: 25, angle: 0 },
+                        { type: '三角形', x: 180, y: 240, scale: 1.0, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 3, '圆形': 2, '三角形': 1, '平行四边形': 0 }
+                },
+                // 3. 大树
+                {
+                    name: '🌳 大树',
+                    shapes: [
+                        { type: '长方形', x: 330, y: 300, w: 50, h: 100, angle: 0 },
+                        { type: '三角形', x: 300, y: 250, scale: 1.8, angle: 0 },
+                        { type: '三角形', x: 310, y: 200, scale: 1.4, angle: 0 },
+                        { type: '圆形', x: 330, y: 150, r: 30, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '三角形': 2, '圆形': 1, '正方形': 0, '平行四边形': 0 }
+                },
+                // 4. 火箭
+                {
+                    name: '🚀 火箭',
+                    shapes: [
+                        { type: '长方形', x: 310, y: 250, w: 80, h: 120, angle: 0 },
+                        { type: '三角形', x: 300, y: 230, scale: 1.6, angle: 0 },
+                        { type: '圆形', x: 310, y: 300, r: 20, angle: 0 },
+                        { type: '正方形', x: 290, y: 260, size: 20, angle: 45 },
+                        { type: '正方形', x: 350, y: 260, size: 20, angle: 45 },
+                        { type: '平行四边形', x: 280, y: 340, w: 40, h: 20, angle: 20, skew: 0.3 },
+                        { type: '平行四边形', x: 350, y: 340, w: 40, h: 20, angle: -20, skew: 0.7 },
+                    ],
+                    counts: { '长方形': 1, '三角形': 1, '圆形': 1, '正方形': 2, '平行四边形': 2 }
+                },
+                // 5. 轮船
+                {
+                    name: '🚢 轮船',
+                    shapes: [
+                        { type: '长方形', x: 200, y: 280, w: 280, h: 70, angle: 0 },
+                        { type: '长方形', x: 350, y: 220, w: 50, h: 60, angle: 0 },
+                        { type: '三角形', x: 180, y: 270, scale: 1.2, angle: 0 },
+                        { type: '圆形', x: 240, y: 300, r: 18, angle: 0 },
+                        { type: '圆形', x: 360, y: 300, r: 18, angle: 0 },
+                        { type: '正方形', x: 355, y: 230, size: 15, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 1, '圆形': 2, '三角形': 1, '平行四边形': 0 }
+                },
+                // 6. 蝴蝶
+                {
+                    name: '🦋 蝴蝶',
+                    shapes: [
+                        { type: '圆形', x: 280, y: 200, r: 45, angle: 0 },
+                        { type: '圆形', x: 400, y: 200, r: 45, angle: 0 },
+                        { type: '圆形', x: 280, y: 280, r: 35, angle: 0 },
+                        { type: '圆形', x: 400, y: 280, r: 35, angle: 0 },
+                        { type: '长方形', x: 330, y: 220, w: 20, h: 80, angle: 0 },
+                        { type: '三角形', x: 315, y: 190, scale: 0.6, angle: 20 },
+                        { type: '三角形', x: 365, y: 190, scale: 0.6, angle: -20 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 0, '圆形': 4, '三角形': 2, '平行四边形': 0 }
+                },
+                // 7. 机器人
+                {
+                    name: '🤖 机器人',
+                    shapes: [
+                        { type: '正方形', x: 300, y: 250, size: 70, angle: 0 },
+                        { type: '正方形', x: 310, y: 180, size: 50, angle: 0 },
+                        { type: '圆形', x: 325, y: 195, r: 8, angle: 0 },
+                        { type: '圆形', x: 345, y: 195, r: 8, angle: 0 },
+                        { type: '长方形', x: 270, y: 270, w: 20, h: 40, angle: 10 },
+                        { type: '长方形', x: 380, y: 270, w: 20, h: 40, angle: -10 },
+                        { type: '三角形', x: 325, y: 165, scale: 0.8, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 2, '圆形': 2, '三角形': 1, '平行四边形': 0 }
+                },
+                // 8. 向日葵
+                {
+                    name: '🌻 向日葵',
+                    shapes: [
+                        { type: '圆形', x: 340, y: 180, r: 35, angle: 0 },
+                        { type: '三角形', x: 305, y: 170, scale: 0.7, angle: 0 },
+                        { type: '三角形', x: 375, y: 170, scale: 0.7, angle: 0 },
+                        { type: '三角形', x: 340, y: 145, scale: 0.7, angle: 0 },
+                        { type: '三角形', x: 305, y: 200, scale: 0.7, angle: 30 },
+                        { type: '三角形', x: 375, y: 200, scale: 0.7, angle: -30 },
+                        { type: '长方形', x: 330, y: 250, w: 20, h: 100, angle: 0 },
+                        { type: '平行四边形', x: 305, y: 280, w: 40, h: 20, angle: 10, skew: 0.2 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 0, '圆形': 1, '三角形': 5, '平行四边形': 1 }
+                },
+                // 9. 小鱼
+                {
+                    name: '🐟 小鱼',
+                    shapes: [
+                        { type: '圆形', x: 320, y: 250, r: 40, angle: 0 },
+                        { type: '三角形', x: 280, y: 230, scale: 1.2, angle: -10 },
+                        { type: '三角形', x: 280, y: 270, scale: 1.2, angle: 10 },
+                        { type: '圆形', x: 340, y: 240, r: 8, angle: 0 },
+                        { type: '圆形', x: 340, y: 240, r: 4, angle: 0 },
+                        { type: '三角形', x: 370, y: 245, scale: 0.8, angle: 0 },
+                    ],
+                    counts: { '长方形': 0, '正方形': 0, '圆形': 3, '三角形': 3, '平行四边形': 0 }
+                },
+                // 10. 圣诞树
+                {
+                    name: '🎄 圣诞树',
+                    shapes: [
+                        { type: '三角形', x: 300, y: 260, scale: 2.0, angle: 0 },
+                        { type: '三角形', x: 310, y: 200, scale: 1.5, angle: 0 },
+                        { type: '三角形', x: 320, y: 150, scale: 1.0, angle: 0 },
+                        { type: '长方形', x: 330, y: 300, w: 20, h: 50, angle: 0 },
+                        { type: '正方形', x: 300, y: 140, size: 15, angle: 45 },
+                        { type: '圆形', x: 290, y: 210, r: 8, angle: 0 },
+                        { type: '圆形', x: 360, y: 220, r: 8, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 1, '圆形': 2, '三角形': 3, '平行四边形': 0 }
+                },
+                // 11. 风车
+                {
+                    name: '🌀 风车',
+                    shapes: [
+                        { type: '长方形', x: 320, y: 330, w: 40, h: 60, angle: 0 },
+                        { type: '三角形', x: 320, y: 230, scale: 1.4, angle: -30 },
+                        { type: '三角形', x: 320, y: 230, scale: 1.4, angle: 30 },
+                        { type: '三角形', x: 320, y: 230, scale: 1.4, angle: 90 },
+                        { type: '三角形', x: 320, y: 230, scale: 1.4, angle: 150 },
+                        { type: '圆形', x: 320, y: 230, r: 15, angle: 0 },
+                        { type: '圆形', x: 320, y: 230, r: 6, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 0, '圆形': 2, '三角形': 4, '平行四边形': 0 }
+                },
+                // 12. 卡车
+                {
+                    name: '🚚 卡车',
+                    shapes: [
+                        { type: '长方形', x: 220, y: 260, w: 180, h: 70, angle: 0 },
+                        { type: '长方形', x: 400, y: 240, w: 60, h: 90, angle: 0 },
+                        { type: '正方形', x: 405, y: 250, size: 30, angle: 0 },
+                        { type: '圆形', x: 260, y: 310, r: 22, angle: 0 },
+                        { type: '圆形', x: 360, y: 310, r: 22, angle: 0 },
+                        { type: '正方形', x: 230, y: 275, size: 20, angle: 0 },
+                        { type: '正方形', x: 300, y: 275, size: 20, angle: 0 },
+                        { type: '正方形', x: 370, y: 275, size: 20, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 4, '圆形': 2, '三角形': 0, '平行四边形': 0 }
+                },
+                // 13. 小汽车
+                {
+                    name: '🚗 小汽车',
+                    shapes: [
+                        { type: '长方形', x: 220, y: 250, w: 200, h: 70, angle: 0 },
+                        { type: '长方形', x: 270, y: 200, w: 80, h: 50, angle: 0 },
+                        { type: '正方形', x: 250, y: 280, size: 25, angle: 0 },
+                        { type: '正方形', x: 340, y: 280, size: 25, angle: 0 },
+                        { type: '圆形', x: 250, y: 300, r: 20, angle: 0 },
+                        { type: '圆形', x: 340, y: 300, r: 20, angle: 0 },
+                        { type: '三角形', x: 300, y: 190, scale: 0.8, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 2, '圆形': 2, '三角形': 1, '平行四边形': 0 }
+                },
+                // 14. 飞机
+                {
+                    name: '✈️ 飞机',
+                    shapes: [
+                        { type: '长方形', x: 300, y: 230, w: 120, h: 30, angle: 0 },
+                        { type: '长方形', x: 340, y: 190, w: 30, h: 40, angle: 0 },
+                        { type: '三角形', x: 240, y: 225, scale: 1.0, angle: 0 },
+                        { type: '三角形', x: 420, y: 225, scale: 1.0, angle: 0 },
+                        { type: '三角形', x: 330, y: 180, scale: 0.8, angle: 0 },
+                        { type: '圆形', x: 300, y: 245, r: 15, angle: 0 },
+                        { type: '圆形', x: 420, y: 245, r: 15, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 0, '圆形': 2, '三角形': 3, '平行四边形': 0 }
+                },
+                // 15. 帆船
+                {
+                    name: '⛵ 帆船',
+                    shapes: [
+                        { type: '长方形', x: 280, y: 280, w: 150, h: 40, angle: 0 },
+                        { type: '长方形', x: 310, y: 240, w: 10, h: 60, angle: 0 },
+                        { type: '三角形', x: 300, y: 200, scale: 1.6, angle: 0 },
+                        { type: '三角形', x: 360, y: 200, scale: 1.4, angle: 0 },
+                        { type: '三角形', x: 280, y: 275, scale: 0.8, angle: 0 },
+                        { type: '圆形', x: 290, y: 300, r: 15, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 0, '圆形': 1, '三角形': 3, '平行四边形': 0 }
+                },
+                // 16. 城堡
+                {
+                    name: '🏰 城堡',
+                    shapes: [
+                        { type: '长方形', x: 220, y: 260, w: 260, h: 100, angle: 0 },
+                        { type: '长方形', x: 230, y: 220, w: 40, h: 40, angle: 0 },
+                        { type: '长方形', x: 310, y: 210, w: 40, h: 50, angle: 0 },
+                        { type: '长方形', x: 390, y: 220, w: 40, h: 40, angle: 0 },
+                        { type: '三角形', x: 230, y: 200, scale: 1.2, angle: 0 },
+                        { type: '三角形', x: 310, y: 190, scale: 1.2, angle: 0 },
+                        { type: '三角形', x: 390, y: 200, scale: 1.2, angle: 0 },
+                        { type: '正方形', x: 330, y: 280, size: 30, angle: 0 },
+                        { type: '正方形', x: 370, y: 280, size: 30, angle: 0 },
+                    ],
+                    counts: { '长方形': 4, '正方形': 2, '圆形': 0, '三角形': 3, '平行四边形': 0 }
+                },
+                // 17. 帐篷
+                {
+                    name: '⛺ 帐篷',
+                    shapes: [
+                        { type: '三角形', x: 260, y: 240, scale: 2.0, angle: 0 },
+                        { type: '三角形', x: 400, y: 240, scale: 2.0, angle: 0 },
+                        { type: '长方形', x: 280, y: 300, w: 160, h: 40, angle: 0 },
+                        { type: '圆形', x: 330, y: 220, r: 20, angle: 0 },
+                        { type: '正方形', x: 350, y: 310, size: 20, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 1, '圆形': 1, '三角形': 2, '平行四边形': 0 }
+                },
+                // 18. 蘑菇
+                {
+                    name: '🍄 蘑菇',
+                    shapes: [
+                        { type: '圆形', x: 300, y: 200, r: 60, angle: 0 },
+                        { type: '圆形', x: 250, y: 180, r: 30, angle: 0 },
+                        { type: '圆形', x: 350, y: 180, r: 30, angle: 0 },
+                        { type: '长方形', x: 310, y: 280, w: 30, h: 80, angle: 0 },
+                        { type: '正方形', x: 325, y: 310, size: 15, angle: 0 },
+                        { type: '正方形', x: 325, y: 330, size: 15, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 2, '圆形': 3, '三角形': 0, '平行四边形': 0 }
+                },
+                // 19. 花朵
+                {
+                    name: '🌸 花朵',
+                    shapes: [
+                        { type: '圆形', x: 310, y: 200, r: 20, angle: 0 },
+                        { type: '圆形', x: 280, y: 170, r: 25, angle: 0 },
+                        { type: '圆形', x: 340, y: 170, r: 25, angle: 0 },
+                        { type: '圆形', x: 280, y: 230, r: 25, angle: 0 },
+                        { type: '圆形', x: 340, y: 230, r: 25, angle: 0 },
+                        { type: '长方形', x: 305, y: 260, w: 10, h: 60, angle: 0 },
+                        { type: '圆形', x: 270, y: 300, r: 10, angle: 0 },
+                        { type: '圆形', x: 350, y: 300, r: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 0, '圆形': 7, '三角形': 0, '平行四边形': 0 }
+                },
+                // 20. 太阳
+                {
+                    name: '☀️ 太阳',
+                    shapes: [
+                        { type: '圆形', x: 330, y: 200, r: 50, angle: 0 },
+                        { type: '三角形', x: 330, y: 130, scale: 0.8, angle: 0 },
+                        { type: '三角形', x: 400, y: 160, scale: 0.8, angle: 30 },
+                        { type: '三角形', x: 420, y: 230, scale: 0.8, angle: 60 },
+                        { type: '三角形', x: 400, y: 290, scale: 0.8, angle: 90 },
+                        { type: '三角形', x: 330, y: 310, scale: 0.8, angle: 120 },
+                        { type: '三角形', x: 260, y: 290, scale: 0.8, angle: 150 },
+                        { type: '三角形', x: 240, y: 230, scale: 0.8, angle: 180 },
+                        { type: '三角形', x: 260, y: 160, scale: 0.8, angle: 210 },
+                    ],
+                    counts: { '长方形': 0, '正方形': 0, '圆形': 1, '三角形': 8, '平行四边形': 0 }
+                },
+                // 21. 云朵
+                {
+                    name: '☁️ 云朵',
+                    shapes: [
+                        { type: '圆形', x: 280, y: 200, r: 45, angle: 0 },
+                        { type: '圆形', x: 340, y: 170, r: 50, angle: 0 },
+                        { type: '圆形', x: 390, y: 200, r: 40, angle: 0 },
+                        { type: '圆形', x: 310, y: 220, r: 35, angle: 0 },
+                        { type: '圆形', x: 370, y: 230, r: 30, angle: 0 },
+                        { type: '长方形', x: 300, y: 240, w: 80, h: 20, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 0, '圆形': 5, '三角形': 0, '平行四边形': 0 }
+                },
+                // 22. 雨伞
+                {
+                    name: '☂️ 雨伞',
+                    shapes: [
+                        { type: '长方形', x: 330, y: 280, w: 10, h: 80, angle: 0 },
+                        { type: '三角形', x: 280, y: 220, scale: 1.8, angle: 0 },
+                        { type: '三角形', x: 380, y: 220, scale: 1.8, angle: 0 },
+                        { type: '三角形', x: 330, y: 220, scale: 1.8, angle: 0 },
+                        { type: '圆形', x: 330, y: 210, r: 15, angle: 0 },
+                        { type: '正方形', x: 310, y: 300, size: 10, angle: 0 },
+                        { type: '正方形', x: 350, y: 300, size: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 2, '圆形': 1, '三角形': 3, '平行四边形': 0 }
+                },
+                // 23. 帽子
+                {
+                    name: '🎩 帽子',
+                    shapes: [
+                        { type: '长方形', x: 280, y: 220, w: 120, h: 30, angle: 0 },
+                        { type: '长方形', x: 320, y: 180, w: 40, h: 40, angle: 0 },
+                        { type: '正方形', x: 330, y: 250, size: 20, angle: 0 },
+                        { type: '圆形', x: 340, y: 200, r: 15, angle: 0 },
+                        { type: '三角形', x: 330, y: 160, scale: 0.8, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 1, '圆形': 1, '三角形': 1, '平行四边形': 0 }
+                },
+                // 24. 眼镜
+                {
+                    name: '👓 眼镜',
+                    shapes: [
+                        { type: '圆形', x: 280, y: 220, r: 30, angle: 0 },
+                        { type: '圆形', x: 380, y: 220, r: 30, angle: 0 },
+                        { type: '长方形', x: 310, y: 215, w: 40, h: 10, angle: 0 },
+                        { type: '长方形', x: 250, y: 230, w: 10, h: 20, angle: 30 },
+                        { type: '长方形', x: 400, y: 230, w: 10, h: 20, angle: -30 },
+                        { type: '正方形', x: 340, y: 250, size: 15, angle: 0 },
+                    ],
+                    counts: { '长方形': 3, '正方形': 1, '圆形': 2, '三角形': 0, '平行四边形': 0 }
+                },
+                // 25. 台灯
+                {
+                    name: '💡 台灯',
+                    shapes: [
+                        { type: '长方形', x: 320, y: 300, w: 20, h: 80, angle: 0 },
+                        { type: '长方形', x: 290, y: 280, w: 80, h: 20, angle: 0 },
+                        { type: '三角形', x: 320, y: 220, scale: 1.2, angle: 0 },
+                        { type: '三角形', x: 320, y: 240, scale: 1.0, angle: 0 },
+                        { type: '正方形', x: 310, y: 290, size: 15, angle: 0 },
+                        { type: '圆形', x: 320, y: 210, r: 20, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 1, '圆形': 1, '三角形': 2, '平行四边形': 0 }
+                },
+                // 26. 电视
+                {
+                    name: '📺 电视',
+                    shapes: [
+                        { type: '长方形', x: 280, y: 220, w: 160, h: 110, angle: 0 },
+                        { type: '长方形', x: 290, y: 230, w: 140, h: 90, angle: 0 },
+                        { type: '正方形', x: 330, y: 330, w: 30, h: 20, angle: 0 },
+                        { type: '正方形', x: 380, y: 250, size: 20, angle: 0 },
+                        { type: '圆形', x: 360, y: 280, r: 15, angle: 0 },
+                        { type: '圆形', x: 310, y: 280, r: 15, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 2, '圆形': 2, '三角形': 0, '平行四边形': 0 }
+                },
+                // 27. 手机
+                {
+                    name: '📱 手机',
+                    shapes: [
+                        { type: '长方形', x: 330, y: 200, w: 60, h: 100, angle: 0 },
+                        { type: '长方形', x: 335, y: 210, w: 50, h: 80, angle: 0 },
+                        { type: '正方形', x: 340, y: 230, size: 15, angle: 0 },
+                        { type: '正方形', x: 370, y: 230, size: 15, angle: 0 },
+                        { type: '正方形', x: 340, y: 260, size: 15, angle: 0 },
+                        { type: '正方形', x: 370, y: 260, size: 15, angle: 0 },
+                        { type: '圆形', x: 360, y: 280, r: 8, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 4, '圆形': 1, '三角形': 0, '平行四边形': 0 }
+                },
+                // 28. 吉他
+                {
+                    name: '🎸 吉他',
+                    shapes: [
+                        { type: '长方形', x: 330, y: 180, w: 20, h: 120, angle: 0 },
+                        { type: '圆形', x: 330, y: 280, r: 35, angle: 0 },
+                        { type: '圆形', x: 330, y: 200, r: 25, angle: 0 },
+                        { type: '正方形', x: 310, y: 240, size: 15, angle: 0 },
+                        { type: '正方形', x: 350, y: 240, size: 15, angle: 0 },
+                        { type: '正方形', x: 310, y: 300, size: 10, angle: 0 },
+                        { type: '正方形', x: 350, y: 300, size: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 4, '圆形': 2, '三角形': 0, '平行四边形': 0 }
+                },
+                // 29. 奖杯
+                {
+                    name: '🏆 奖杯',
+                    shapes: [
+                        { type: '长方形', x: 310, y: 280, w: 60, h: 30, angle: 0 },
+                        { type: '长方形', x: 325, y: 310, w: 30, h: 30, angle: 0 },
+                        { type: '圆形', x: 340, y: 200, r: 40, angle: 0 },
+                        { type: '圆形', x: 340, y: 200, r: 30, angle: 0 },
+                        { type: '三角形', x: 300, y: 180, scale: 1.0, angle: 0 },
+                        { type: '三角形', x: 380, y: 180, scale: 1.0, angle: 0 },
+                        { type: '正方形', x: 340, y: 250, size: 15, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 1, '圆形': 2, '三角形': 2, '平行四边形': 0 }
+                },
+                // 30. 冰淇淋
+                {
+                    name: '🍦 冰淇淋',
+                    shapes: [
+                        { type: '圆形', x: 330, y: 180, r: 30, angle: 0 },
+                        { type: '圆形', x: 300, y: 200, r: 25, angle: 0 },
+                        { type: '圆形', x: 360, y: 200, r: 25, angle: 0 },
+                        { type: '三角形', x: 330, y: 240, scale: 0.8, angle: 180 },
+                        { type: '长方形', x: 315, y: 250, w: 30, h: 20, angle: 0 },
+                        { type: '正方形', x: 325, y: 270, size: 10, angle: 0 },
+                        { type: '正方形', x: 345, y: 270, size: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 2, '圆形': 3, '三角形': 1, '平行四边形': 0 }
+                },
+                // 31. 蛋糕
+                {
+                    name: '🎂 蛋糕',
+                    shapes: [
+                        { type: '长方形', x: 280, y: 240, w: 120, h: 50, angle: 0 },
+                        { type: '长方形', x: 290, y: 220, w: 100, h: 30, angle: 0 },
+                        { type: '长方形', x: 300, y: 200, w: 80, h: 20, angle: 0 },
+                        { type: '正方形', x: 330, y: 180, size: 20, angle: 0 },
+                        { type: '圆形', x: 310, y: 210, r: 8, angle: 0 },
+                        { type: '圆形', x: 370, y: 210, r: 8, angle: 0 },
+                        { type: '正方形', x: 340, y: 250, size: 15, angle: 0 },
+                    ],
+                    counts: { '长方形': 3, '正方形': 2, '圆形': 2, '三角形': 0, '平行四边形': 0 }
+                },
+                // 32. 汉堡
+                {
+                    name: '🍔 汉堡',
+                    shapes: [
+                        { type: '圆形', x: 330, y: 200, r: 50, angle: 0 },
+                        { type: '长方形', x: 290, y: 200, w: 80, h: 20, angle: 0 },
+                        { type: '长方形', x: 290, y: 240, w: 80, h: 20, angle: 0 },
+                        { type: '长方形', x: 300, y: 220, w: 60, h: 20, angle: 0 },
+                        { type: '正方形', x: 310, y: 210, size: 15, angle: 0 },
+                        { type: '正方形', x: 350, y: 210, size: 15, angle: 0 },
+                        { type: '正方形', x: 310, y: 250, size: 15, angle: 0 },
+                        { type: '正方形', x: 350, y: 250, size: 15, angle: 0 },
+                    ],
+                    counts: { '长方形': 3, '正方形': 4, '圆形': 1, '三角形': 0, '平行四边形': 0 }
+                },
+                // 33. 甜甜圈
+                {
+                    name: '🍩 甜甜圈',
+                    shapes: [
+                        { type: '圆形', x: 330, y: 200, r: 50, angle: 0 },
+                        { type: '圆形', x: 330, y: 200, r: 35, angle: 0 },
+                        { type: '圆形', x: 330, y: 200, r: 20, angle: 0 },
+                        { type: '正方形', x: 310, y: 180, size: 12, angle: 45 },
+                        { type: '正方形', x: 350, y: 180, size: 12, angle: 45 },
+                        { type: '正方形', x: 310, y: 220, size: 12, angle: 45 },
+                        { type: '正方形', x: 350, y: 220, size: 12, angle: 45 },
+                        { type: '正方形', x: 330, y: 200, size: 12, angle: 45 },
+                    ],
+                    counts: { '长方形': 0, '正方形': 5, '圆形': 3, '三角形': 0, '平行四边形': 0 }
+                },
+                // 34. 猫头鹰
+                {
+                    name: '🦉 猫头鹰',
+                    shapes: [
+                        { type: '圆形', x: 330, y: 200, r: 50, angle: 0 },
+                        { type: '圆形', x: 300, y: 190, r: 20, angle: 0 },
+                        { type: '圆形', x: 360, y: 190, r: 20, angle: 0 },
+                        { type: '圆形', x: 300, y: 190, r: 10, angle: 0 },
+                        { type: '圆形', x: 360, y: 190, r: 10, angle: 0 },
+                        { type: '三角形', x: 330, y: 160, scale: 0.6, angle: 0 },
+                        { type: '正方形', x: 310, y: 220, size: 15, angle: 0 },
+                        { type: '正方形', x: 350, y: 220, size: 15, angle: 0 },
+                        { type: '长方形', x: 315, y: 250, w: 30, h: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 2, '圆形': 5, '三角形': 1, '平行四边形': 0 }
+                },
+                // 35. 蝴蝶结
+                {
+                    name: '🎀 蝴蝶结',
+                    shapes: [
+                        { type: '三角形', x: 280, y: 200, scale: 1.2, angle: -30 },
+                        { type: '三角形', x: 380, y: 200, scale: 1.2, angle: 30 },
+                        { type: '三角形', x: 280, y: 240, scale: 1.2, angle: 30 },
+                        { type: '三角形', x: 380, y: 240, scale: 1.2, angle: -30 },
+                        { type: '圆形', x: 330, y: 220, r: 20, angle: 0 },
+                        { type: '正方形', x: 330, y: 200, size: 15, angle: 0 },
+                        { type: '正方形', x: 320, y: 240, size: 10, angle: 0 },
+                        { type: '正方形', x: 340, y: 240, size: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 0, '正方形': 3, '圆形': 1, '三角形': 4, '平行四边形': 0 }
+                },
+                // 36. 棒球
+                {
+                    name: '⚾ 棒球',
+                    shapes: [
+                        { type: '圆形', x: 330, y: 200, r: 55, angle: 0 },
+                        { type: '圆形', x: 330, y: 200, r: 50, angle: 0 },
+                        { type: '长方形', x: 280, y: 195, w: 100, h: 10, angle: 15 },
+                        { type: '长方形', x: 280, y: 195, w: 100, h: 10, angle: -15 },
+                        { type: '正方形', x: 330, y: 200, size: 15, angle: 45 },
+                        { type: '正方形', x: 310, y: 180, size: 8, angle: 0 },
+                        { type: '正方形', x: 350, y: 180, size: 8, angle: 0 },
+                        { type: '正方形', x: 310, y: 220, size: 8, angle: 0 },
+                        { type: '正方形', x: 350, y: 220, size: 8, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 5, '圆形': 2, '三角形': 0, '平行四边形': 0 }
+                },
+                // 37. 王冠
+                {
+                    name: '👑 皇冠',
+                    shapes: [
+                        { type: '长方形', x: 280, y: 240, w: 120, h: 30, angle: 0 },
+                        { type: '三角形', x: 280, y: 200, scale: 1.2, angle: 0 },
+                        { type: '三角形', x: 340, y: 180, scale: 1.4, angle: 0 },
+                        { type: '三角形', x: 400, y: 200, scale: 1.2, angle: 0 },
+                        { type: '正方形', x: 310, y: 210, size: 15, angle: 0 },
+                        { type: '正方形', x: 370, y: 210, size: 15, angle: 0 },
+                        { type: '圆形', x: 340, y: 190, r: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 2, '圆形': 1, '三角形': 3, '平行四边形': 0 }
+                },
+                // 38. 西瓜
+                {
+                    name: '🍉 西瓜',
+                    shapes: [
+                        { type: '圆形', x: 330, y: 200, r: 55, angle: 0 },
+                        { type: '圆形', x: 330, y: 200, r: 45, angle: 0 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.6, angle: 0 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.6, angle: 60 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.6, angle: 120 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.6, angle: 180 },
+                        { type: '正方形', x: 320, y: 200, size: 10, angle: 0 },
+                        { type: '正方形', x: 340, y: 200, size: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 0, '正方形': 2, '圆形': 2, '三角形': 4, '平行四边形': 0 }
+                },
+                // 39. 菠萝
+                {
+                    name: '🍍 菠萝',
+                    shapes: [
+                        { type: '长方形', x: 310, y: 250, w: 40, h: 80, angle: 0 },
+                        { type: '三角形', x: 290, y: 200, scale: 1.2, angle: 0 },
+                        { type: '三角形', x: 370, y: 200, scale: 1.2, angle: 0 },
+                        { type: '三角形', x: 330, y: 180, scale: 1.0, angle: 0 },
+                        { type: '正方形', x: 310, y: 230, size: 10, angle: 0 },
+                        { type: '正方形', x: 350, y: 230, size: 10, angle: 0 },
+                        { type: '正方形', x: 310, y: 270, size: 10, angle: 0 },
+                        { type: '正方形', x: 350, y: 270, size: 10, angle: 0 },
+                        { type: '正方形', x: 330, y: 250, size: 10, angle: 45 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 5, '圆形': 0, '三角形': 3, '平行四边形': 0 }
+                },
+                // 40. 披萨
+                {
+                    name: '🍕 披萨',
+                    shapes: [
+                        { type: '圆形', x: 330, y: 200, r: 60, angle: 0 },
+                        { type: '圆形', x: 330, y: 200, r: 50, angle: 0 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.8, angle: 0 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.8, angle: 60 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.8, angle: 120 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.8, angle: 180 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.8, angle: 240 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.8, angle: 300 },
+                        { type: '正方形', x: 330, y: 200, size: 15, angle: 45 },
+                    ],
+                    counts: { '长方形': 0, '正方形': 1, '圆形': 2, '三角形': 6, '平行四边形': 0 }
+                },
+                // 41. 月亮
+                {
+                    name: '🌙 月亮',
+                    shapes: [
+                        { type: '圆形', x: 330, y: 200, r: 60, angle: 0 },
+                        { type: '圆形', x: 360, y: 180, r: 40, angle: 0 },
+                        { type: '正方形', x: 300, y: 220, size: 20, angle: 0 },
+                        { type: '正方形', x: 350, y: 250, size: 15, angle: 0 },
+                        { type: '长方形', x: 280, y: 280, w: 80, h: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 2, '圆形': 2, '三角形': 0, '平行四边形': 0 }
+                },
+                // 42. 星星
+                {
+                    name: '⭐ 星星',
+                    shapes: [
+                        { type: '三角形', x: 330, y: 140, scale: 1.0, angle: 0 },
+                        { type: '三角形', x: 400, y: 200, scale: 1.0, angle: 40 },
+                        { type: '三角形', x: 400, y: 280, scale: 1.0, angle: 80 },
+                        { type: '三角形', x: 330, y: 320, scale: 1.0, angle: 120 },
+                        { type: '三角形', x: 260, y: 280, scale: 1.0, angle: 160 },
+                        { type: '三角形', x: 260, y: 200, scale: 1.0, angle: 200 },
+                        { type: '正方形', x: 330, y: 230, size: 20, angle: 45 },
+                    ],
+                    counts: { '长方形': 0, '正方形': 1, '圆形': 0, '三角形': 6, '平行四边形': 0 }
+                },
+                // 43. 彩虹
+                {
+                    name: '🌈 彩虹',
+                    shapes: [
+                        { type: '长方形', x: 150, y: 350, w: 460, h: 30, angle: 0 },
+                        { type: '长方形', x: 160, y: 340, w: 440, h: 20, angle: 0 },
+                        { type: '长方形', x: 170, y: 330, w: 420, h: 20, angle: 0 },
+                        { type: '长方形', x: 180, y: 320, w: 400, h: 20, angle: 0 },
+                        { type: '长方形', x: 190, y: 310, w: 380, h: 20, angle: 0 },
+                        { type: '长方形', x: 200, y: 300, w: 360, h: 20, angle: 0 },
+                        { type: '圆形', x: 150, y: 340, r: 25, angle: 0 },
+                        { type: '圆形', x: 610, y: 340, r: 25, angle: 0 },
+                    ],
+                    counts: { '长方形': 6, '正方形': 0, '圆形': 2, '三角形': 0, '平行四边形': 0 }
+                },
+                // 44. 椅子
+                {
+                    name: '🪑 椅子',
+                    shapes: [
+                        { type: '长方形', x: 280, y: 250, w: 80, h: 20, angle: 0 },
+                        { type: '长方形', x: 290, y: 270, w: 10, h: 60, angle: 0 },
+                        { type: '长方形', x: 340, y: 270, w: 10, h: 60, angle: 0 },
+                        { type: '长方形', x: 280, y: 300, w: 80, h: 10, angle: 0 },
+                        { type: '正方形', x: 320, y: 230, size: 20, angle: 0 },
+                        { type: '正方形', x: 300, y: 255, size: 15, angle: 0 },
+                    ],
+                    counts: { '长方形': 4, '正方形': 2, '圆形': 0, '三角形': 0, '平行四边形': 0 }
+                },
+                // 45. 桌子
+                {
+                    name: '🪵 桌子',
+                    shapes: [
+                        { type: '长方形', x: 230, y: 280, w: 200, h: 20, angle: 0 },
+                        { type: '长方形', x: 250, y: 300, w: 15, h: 50, angle: 0 },
+                        { type: '长方形', x: 395, y: 300, w: 15, h: 50, angle: 0 },
+                        { type: '正方形', x: 330, y: 260, size: 30, angle: 0 },
+                        { type: '正方形', x: 300, y: 260, size: 30, angle: 0 },
+                        { type: '正方形', x: 360, y: 260, size: 30, angle: 0 },
+                    ],
+                    counts: { '长方形': 3, '正方形': 3, '圆形': 0, '三角形': 0, '平行四边形': 0 }
+                },
+                // 46. 床
+                {
+                    name: '🛏️ 床',
+                    shapes: [
+                        { type: '长方形', x: 220, y: 260, w: 260, h: 100, angle: 0 },
+                        { type: '长方形', x: 230, y: 240, w: 240, h: 20, angle: 0 },
+                        { type: '正方形', x: 260, y: 280, size: 30, angle: 0 },
+                        { type: '正方形', x: 420, y: 280, size: 30, angle: 0 },
+                        { type: '圆形', x: 330, y: 300, r: 20, angle: 0 },
+                        { type: '三角形', x: 220, y: 250, scale: 0.6, angle: 0 },
+                        { type: '三角形', x: 480, y: 250, scale: 0.6, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 2, '圆形': 1, '三角形': 2, '平行四边形': 0 }
+                },
+                // 47. 电脑
+                {
+                    name: '💻 电脑',
+                    shapes: [
+                        { type: '长方形', x: 290, y: 220, w: 120, h: 80, angle: 0 },
+                        { type: '长方形', x: 300, y: 230, w: 100, h: 60, angle: 0 },
+                        { type: '长方形', x: 320, y: 300, w: 60, h: 10, angle: 0 },
+                        { type: '正方形', x: 340, y: 310, w: 20, h: 20, angle: 0 },
+                        { type: '正方形', x: 360, y: 250, size: 15, angle: 0 },
+                        { type: '圆形', x: 340, y: 240, r: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 3, '正方形': 2, '圆形': 1, '三角形': 0, '平行四边形': 0 }
+                },
+                // 48. 相机
+                {
+                    name: '📷 相机',
+                    shapes: [
+                        { type: '长方形', x: 270, y: 230, w: 160, h: 90, angle: 0 },
+                        { type: '长方形', x: 300, y: 220, w: 40, h: 20, angle: 0 },
+                        { type: '正方形', x: 330, y: 250, size: 40, angle: 0 },
+                        { type: '正方形', x: 340, y: 260, size: 20, angle: 0 },
+                        { type: '圆形', x: 310, y: 280, r: 12, angle: 0 },
+                        { type: '圆形', x: 390, y: 280, r: 12, angle: 0 },
+                        { type: '三角形', x: 270, y: 230, scale: 0.5, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 2, '圆形': 2, '三角形': 1, '平行四边形': 0 }
+                },
+                // 49. 盾牌
+                {
+                    name: '🛡️ 盾牌',
+                    shapes: [
+                        { type: '长方形', x: 300, y: 240, w: 80, h: 100, angle: 0 },
+                        { type: '长方形', x: 320, y: 230, w: 40, h: 20, angle: 0 },
+                        { type: '圆形', x: 340, y: 280, r: 30, angle: 0 },
+                        { type: '圆形', x: 340, y: 280, r: 20, angle: 0 },
+                        { type: '正方形', x: 310, y: 260, size: 15, angle: 0 },
+                        { type: '正方形', x: 370, y: 260, size: 15, angle: 0 },
+                        { type: '三角形', x: 300, y: 240, scale: 0.5, angle: 0 },
+                        { type: '三角形', x: 380, y: 240, scale: 0.5, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 2, '圆形': 2, '三角形': 2, '平行四边形': 0 }
+                },
+                // 50. 剑
+                {
+                    name: '⚔️ 剑',
+                    shapes: [
+                        { type: '长方形', x: 330, y: 150, w: 10, h: 160, angle: 0 },
+                        { type: '长方形', x: 300, y: 280, w: 70, h: 15, angle: 0 },
+                        { type: '三角形', x: 330, y: 130, scale: 0.8, angle: 0 },
+                        { type: '正方形', x: 320, y: 290, size: 15, angle: 0 },
+                        { type: '正方形', x: 350, y: 290, size: 15, angle: 0 },
+                        { type: '圆形', x: 330, y: 200, r: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 2, '正方形': 2, '圆形': 1, '三角形': 1, '平行四边形': 0 }
+                },
+                // 51. 皇冠（备用）
+                {
+                    name: '👑 皇冠2',
+                    shapes: [
+                        { type: '长方形', x: 280, y: 240, w: 120, h: 30, angle: 0 },
+                        { type: '三角形', x: 280, y: 200, scale: 1.2, angle: 0 },
+                        { type: '三角形', x: 340, y: 180, scale: 1.4, angle: 0 },
+                        { type: '三角形', x: 400, y: 200, scale: 1.2, angle: 0 },
+                        { type: '正方形', x: 310, y: 210, size: 15, angle: 0 },
+                        { type: '正方形', x: 370, y: 210, size: 15, angle: 0 },
+                        { type: '圆形', x: 340, y: 190, r: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 2, '圆形': 1, '三角形': 3, '平行四边形': 0 }
+                },
+                // 52. 西瓜（备用）
+                {
+                    name: '🍉 西瓜2',
+                    shapes: [
+                        { type: '圆形', x: 330, y: 200, r: 55, angle: 0 },
+                        { type: '圆形', x: 330, y: 200, r: 45, angle: 0 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.6, angle: 0 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.6, angle: 60 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.6, angle: 120 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.6, angle: 180 },
+                        { type: '正方形', x: 320, y: 200, size: 10, angle: 0 },
+                        { type: '正方形', x: 340, y: 200, size: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 0, '正方形': 2, '圆形': 2, '三角形': 4, '平行四边形': 0 }
+                },
+                // 53. 菠萝（备用）
+                {
+                    name: '🍍 菠萝2',
+                    shapes: [
+                        { type: '长方形', x: 310, y: 250, w: 40, h: 80, angle: 0 },
+                        { type: '三角形', x: 290, y: 200, scale: 1.2, angle: 0 },
+                        { type: '三角形', x: 370, y: 200, scale: 1.2, angle: 0 },
+                        { type: '三角形', x: 330, y: 180, scale: 1.0, angle: 0 },
+                        { type: '正方形', x: 310, y: 230, size: 10, angle: 0 },
+                        { type: '正方形', x: 350, y: 230, size: 10, angle: 0 },
+                        { type: '正方形', x: 310, y: 270, size: 10, angle: 0 },
+                        { type: '正方形', x: 350, y: 270, size: 10, angle: 0 },
+                        { type: '正方形', x: 330, y: 250, size: 10, angle: 45 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 5, '圆形': 0, '三角形': 3, '平行四边形': 0 }
+                },
+                // 54. 披萨（备用）
+                {
+                    name: '🍕 披萨2',
+                    shapes: [
+                        { type: '圆形', x: 330, y: 200, r: 60, angle: 0 },
+                        { type: '圆形', x: 330, y: 200, r: 50, angle: 0 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.8, angle: 0 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.8, angle: 60 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.8, angle: 120 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.8, angle: 180 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.8, angle: 240 },
+                        { type: '三角形', x: 330, y: 200, scale: 0.8, angle: 300 },
+                        { type: '正方形', x: 330, y: 200, size: 15, angle: 45 },
+                    ],
+                    counts: { '长方形': 0, '正方形': 1, '圆形': 2, '三角形': 6, '平行四边形': 0 }
+                },
+                // 55. 月亮（备用）
+                {
+                    name: '🌙 月亮2',
+                    shapes: [
+                        { type: '圆形', x: 330, y: 200, r: 60, angle: 0 },
+                        { type: '圆形', x: 360, y: 180, r: 40, angle: 0 },
+                        { type: '正方形', x: 300, y: 220, size: 20, angle: 0 },
+                        { type: '正方形', x: 350, y: 250, size: 15, angle: 0 },
+                        { type: '长方形', x: 280, y: 280, w: 80, h: 10, angle: 0 },
+                    ],
+                    counts: { '长方形': 1, '正方形': 2, '圆形': 2, '三角形': 0, '平行四边形': 0 }
+                }
+            ];
+
+            // ============================================================
+            //  游戏核心
+            // ============================================================
+            const TOTAL_ROUNDS = 5;
+            const MAX_SCORE = 100;
+            const SHAPE_TYPES = ['长方形', '正方形', '圆形', '三角形', '平行四边形'];
+            const SHAPE_LABELS = {
+                '长方形': '长方形',
+                '正方形': '正方形',
+                '圆形': '圆形',
+                '三角形': '三角形',
+                '平行四边形': '平行四边形',
+            };
+            const API_SUBMIT_URL = 'https://quickform.cn/api/vylw99t9pn';
+            const API_ALL_URL = 'https://quickform.cn/api/vylw99t9pn/all';
+
+            // ============================================================
+            //  游戏状态
+            // ============================================================
+            let currentShape = '正方形';
+            let score = 0;
+            let round = 0;
+            let isWaiting = false;
+            let isGameFinished = false;
+            let wrongCount = 0;
+            let roundScored = false;
+            let isExamMode = false;
+            let examName = '';
+            let examClass = '';
+            let examCorrectCount = 0;
+
+            let currentCounts = {};
+            let currentTotal = 0;
+            let shapeItems = [];
+            let askedShapes = [];
+            let usedPatternIndices = [];
+            let patternData = [];
+
+            // ---- 计时器相关 ----
+            let timerInterval = null;
+            let timerSeconds = 0;
+            let isTimerRunning = false;
+
+            // DOM 引用
+            const gameArea = document.getElementById('gameArea');
+            const sceneWrapper = document.getElementById('sceneWrapper');
+            const shapeNameLabel = document.getElementById('shapeNameLabel');
+            const answerInput = document.getElementById('answerInput');
+            const submitBtn = document.getElementById('submitBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const resultMsg = document.getElementById('resultMessage');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const numKeypad = document.getElementById('numKeypad');
+            const backspaceBtn = document.getElementById('backspaceBtn');
+            const modeBtn = document.getElementById('modeBtn');
+            const modeBadge = document.getElementById('modeBadge');
+            const timerBadge = document.getElementById('timerBadge');
+            const roundHint = document.getElementById('roundHint');
+
+            const modeModal = document.getElementById('modeModal');
+            const classSelect = document.getElementById('classSelect');
+            const nameInput = document.getElementById('nameInput');
+            const startExamBtn = document.getElementById('startExamBtn');
+            const cancelExamBtn = document.getElementById('cancelExamBtn');
+
+            const scoreModal = document.getElementById('scoreModal');
+            const resultName = document.getElementById('resultName');
+            const resultClass = document.getElementById('resultClass');
+            const resultCorrect = document.getElementById('resultCorrect');
+            const resultTime = document.getElementById('resultTime');
+            const resultTotal = document.getElementById('resultTotal');
+            const closeScoreBtn = document.getElementById('closeScoreBtn');
+
+            // 排行榜 DOM
+            const leaderboardBody = document.getElementById('leaderboardBody');
+            const leaderboardTable = document.getElementById('leaderboardTable');
+            const leaderboardLoading = document.getElementById('leaderboardLoading');
+            const leaderboardEmpty = document.getElementById('leaderboardEmpty');
+            const refreshLeaderboardBtn = document.getElementById('refreshLeaderboardBtn');
+
+            const CANVAS_W = 760;
+            const CANVAS_H = 480;
+            const MARGIN = 40;
+            const MAX_ATTEMPTS = 800;
+
+            // ============================================================
+            //  随机工具
+            // ============================================================
+            function randFloat(min, max) { return Math.random() * (max - min) + min; }
+
+            function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+
+            function degToRad(deg) { return deg * Math.PI / 180; }
+
+            function randomColor() {
+                const hue = Math.floor(Math.random() * 360);
+                const sat = Math.floor(randFloat(65, 90));
+                const light = Math.floor(randFloat(50, 75));
+                return `hsl(${hue}, ${sat}%, ${light}%)`;
+            }
+
+            // ============================================================
+            //  图形绘制基础
+            // ============================================================
+            function clearCanvas() {
+                sceneWrapper.innerHTML = '';
+                shapeItems = [];
+            }
+
+            function bindCount(shapeEl) {
+                let label = null;
+                shapeEl.addEventListener('click', function(e) {
+                    if (isGameFinished) return;
+                    if (isWaiting) return;
+                    e.stopPropagation();
+                    const idx = shapeItems.findIndex(item => item.element === shapeEl);
+                    if (idx !== -1) {
+                        const item = shapeItems[idx];
+                        if (item.label) item.label.style.display = 'none';
+                        shapeItems.splice(idx, 1);
+                        renumberAll();
+                    } else {
+                        if (!label) {
+                            label = document.createElement('span');
+                            label.className = 'count-label';
+                            shapeEl.appendChild(label);
+                        }
+                        shapeItems.push({ element: shapeEl, label: label });
+                        renumberAll();
+                        label.style.transform = 'translate(-50%, -50%) scale(1.3)';
+                        setTimeout(() => { label.style.transform = 'translate(-50%, -50%) scale(1)'; }, 150);
+                    }
+                });
+            }
+
+            function renumberAll() {
+                shapeItems.forEach((item, index) => {
+                    const num = index + 1;
+                    item.number = num;
+                    if (item.label) {
+                        item.label.textContent = num;
+                        item.label.style.display = 'block';
+                    }
+                });
+            }
+
+            function addRect(x, y, w, h, angle, color) {
+                const el = document.createElement('div');
+                el.className = 'shape rect';
+                el.dataset.type = '长方形';
+                el.style.left = x + 'px';
+                el.style.top = y + 'px';
+                el.style.width = w + 'px';
+                el.style.height = h + 'px';
+                el.style.transform = `rotate(${angle}deg)`;
+                el.style.background = color;
+                sceneWrapper.appendChild(el);
+                bindCount(el);
+                return el;
+            }
+
+            function addSquare(x, y, size, angle, color) {
+                const el = document.createElement('div');
+                el.className = 'shape square';
+                el.dataset.type = '正方形';
+                el.style.left = x + 'px';
+                el.style.top = y + 'px';
+                el.style.width = size + 'px';
+                el.style.height = size + 'px';
+                el.style.transform = `rotate(${angle}deg)`;
+                el.style.background = color;
+                sceneWrapper.appendChild(el);
+                bindCount(el);
+                return el;
+            }
+
+            function addCircle(x, y, r, angle, color) {
+                const el = document.createElement('div');
+                el.className = 'shape circle';
+                el.dataset.type = '圆形';
+                el.style.left = x + 'px';
+                el.style.top = y + 'px';
+                el.style.width = r * 2 + 'px';
+                el.style.height = r * 2 + 'px';
+                el.style.transform = `rotate(${angle}deg)`;
+                el.style.background = color;
+                sceneWrapper.appendChild(el);
+                bindCount(el);
+                return el;
+            }
+
+            function addTriangle(x, y, scale, angle, color) {
+                const base = 50 * scale;
+                const height = 45 * scale;
+                const container = document.createElement('div');
+                container.className = 'triangle-wrapper';
+                container.dataset.type = '三角形';
+                container.style.position = 'absolute';
+                container.style.left = x + 'px';
+                container.style.top = y + 'px';
+                container.style.width = base + 'px';
+                container.style.height = height + 'px';
+                container.style.display = 'flex';
+                container.style.alignItems = 'center';
+                container.style.justifyContent = 'center';
+                container.style.pointerEvents = 'auto';
+                container.style.transform = `rotate(${angle}deg)`;
+                container.style.cursor = 'pointer';
+                const tri = document.createElement('div');
+                tri.style.width = '0';
+                tri.style.height = '0';
+                tri.style.borderLeft = (base / 2) + 'px solid transparent';
+                tri.style.borderRight = (base / 2) + 'px solid transparent';
+                tri.style.borderBottom = height + 'px solid ' + color;
+                tri.style.position = 'absolute';
+                tri.style.top = '0';
+                tri.style.left = '0';
+                tri.style.pointerEvents = 'none';
+                container.appendChild(tri);
+                sceneWrapper.appendChild(container);
+                bindCount(container);
+                container.addEventListener('mouseenter', function() {
+                    container.style.transform = `rotate(${angle}deg) scale(1.04)`;
+                    container.style.zIndex = '10';
+                    container.style.filter = 'drop-shadow(0 4px 8px rgba(0,0,0,0.12))';
+                });
+                container.addEventListener('mouseleave', function() {
+                    container.style.transform = `rotate(${angle}deg) scale(1)`;
+                    container.style.zIndex = 'auto';
+                    container.style.filter = 'none';
+                });
+                return container;
+            }
+
+            function addPara(x, y, w, h, angle, color, skew) {
+                const el = document.createElement('div');
+                el.className = 'shape para';
+                el.dataset.type = '平行四边形';
+                el.style.left = x + 'px';
+                el.style.top = y + 'px';
+                el.style.width = w + 'px';
+                el.style.height = h + 'px';
+                el.style.transform = `rotate(${angle}deg)`;
+                el.style.background = color;
+                const leftOffset = skew * 100;
+                const rightOffset = (1 - skew) * 100;
+                el.style.clipPath = `polygon(${leftOffset}% 0%, 100% 0%, ${rightOffset}% 100%, 0% 100%)`;
+                sceneWrapper.appendChild(el);
+                bindCount(el);
+                return el;
+            }
+
+            // ============================================================
+            //  第5轮专用：黑色轮廓绘制函数（无间隙，放大版，居中）
+            // ============================================================
+            function addSquareOutline(x, y, size, angle) {
+                const el = document.createElement('div');
+                el.className = 'shape shape-outline';
+                el.dataset.type = '正方形';
+                el.style.left = x + 'px';
+                el.style.top = y + 'px';
+                el.style.width = size + 'px';
+                el.style.height = size + 'px';
+                el.style.transform = `rotate(${angle}deg)`;
+                el.style.border = '3px solid #000000';
+                el.style.background = 'transparent';
+                el.style.boxSizing = 'border-box';
+                sceneWrapper.appendChild(el);
+                bindCount(el);
+                return el;
+            }
+
+            function addRectOutline(x, y, w, h, angle) {
+                const el = document.createElement('div');
+                el.className = 'shape shape-outline';
+                el.dataset.type = '长方形';
+                el.style.left = x + 'px';
+                el.style.top = y + 'px';
+                el.style.width = w + 'px';
+                el.style.height = h + 'px';
+                el.style.transform = `rotate(${angle}deg)`;
+                el.style.border = '3px solid #000000';
+                el.style.background = 'transparent';
+                el.style.boxSizing = 'border-box';
+                sceneWrapper.appendChild(el);
+                bindCount(el);
+                return el;
+            }
+
+            // ============================================================
+            //  图形生成器
+            // ============================================================
+            function getRotatedBoundingBox(w, h, angleDeg) {
+                const rad = degToRad(angleDeg);
+                const cos = Math.abs(Math.cos(rad));
+                const sin = Math.abs(Math.sin(rad));
+                const bw = (w * cos + h * sin) * 1.15;
+                const bh = (w * sin + h * cos) * 1.15;
+                return { bw, bh };
+            }
+
+            function drawShapes(counts, configs) {
+                let placedShapes = [];
+                let actualCounts = { '长方形': 0, '正方形': 0, '圆形': 0, '三角形': 0, '平行四边形': 0 };
+
+                function clearPlaced() { placedShapes = []; }
+                clearPlaced();
+
+                function tryPlace(type, wRange, hRange, angleRange, scaleRange) {
+                    let w, h, angle, scaleVal = 1,
+                        skew = 0.25;
+                    if (type === '三角形') {
+                        scaleVal = randFloat(scaleRange[0], scaleRange[1]);
+                        const base = 50 * scaleVal;
+                        const height = 45 * scaleVal;
+                        w = base;
+                        h = height;
+                        angle = randFloat(angleRange[0], angleRange[1]);
+                    } else if (type === '圆形') {
+                        const r = randFloat(wRange[0] / 2, wRange[1] / 2);
+                        w = r * 2;
+                        h = r * 2;
+                        angle = randFloat(angleRange[0], angleRange[1]);
+                    } else if (type === '平行四边形') {
+                        w = randFloat(wRange[0], wRange[1]);
+                        h = randFloat(hRange[0], hRange[1]);
+                        angle = randFloat(angleRange[0], angleRange[1]);
+                        skew = randFloat(0.12, 0.38);
+                    } else {
+                        w = randFloat(wRange[0], wRange[1]);
+                        h = randFloat(hRange[0], hRange[1]);
+                        angle = randFloat(angleRange[0], angleRange[1]);
+                    }
+                    let actualW, actualH;
+                    if (type === '圆形') { actualW = w;
+                        actualH = h; } else {
+                        const bb = getRotatedBoundingBox(w, h, angle);
+                        actualW = bb.bw;
+                        actualH = bb.bh;
+                    }
+                    const offsetX = (actualW - w) / 2;
+                    const offsetY = (actualH - h) / 2;
+                    const minX = MARGIN - offsetX;
+                    const maxX = CANVAS_W - MARGIN - actualW - offsetX;
+                    const minY = MARGIN - offsetY;
+                    const maxY = CANVAS_H - MARGIN - actualH - offsetY;
+                    if (maxX < minX || maxY < minY) return null;
+                    const color = randomColor();
+                    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+                        const newX = randFloat(minX, maxX);
+                        const newY = randFloat(minY, maxY);
+                        const cx = newX + w / 2;
+                        const cy = newY + h / 2;
+                        const radius = Math.sqrt(actualW * actualW + actualH * actualH) / 2 * 1.2;
+                        let overlap = false;
+                        for (let p of placedShapes) {
+                            const dx = cx - p.cx;
+                            const dy = cy - p.cy;
+                            const dist = Math.sqrt(dx * dx + dy * dy);
+                            if (dist < radius + p.radius) { overlap = true; break; }
+                        }
+                        if (!overlap) {
+                            placedShapes.push({ type, x: newX, y: newY, w, h, angle, cx, cy, radius, scale: (type ===
+                                    '三角形') ? scaleVal : undefined, color, skew: (type === '平行四边形') ? skew :
+                                undefined });
+                            return { x: newX, y: newY, w, h, angle, scale: (type === '三角形') ? scaleVal : undefined,
+                                color, skew: (type === '平行四边形') ? skew : undefined };
+                        }
+                    }
+                    return null;
+                }
+
+                function ensurePlace(type, wRange, hRange, angleRange, scaleRange) {
+                    let wMin = wRange[0],
+                        wMax = wRange[1],
+                        hMin = hRange[0],
+                        hMax = hRange[1];
+                    let sMin = scaleRange ? scaleRange[0] : 0.8,
+                        sMax = scaleRange ? scaleRange[1] : 1.5;
+                    let factor = 1.0;
+                    let result = null;
+                    while (factor >= 0.6) {
+                        const curWMin = wMin * factor,
+                            curWMax = wMax * factor;
+                        const curHMin = hMin * factor,
+                            curHMax = hMax * factor;
+                        let curScaleRange = scaleRange ? [sMin * factor, sMax * factor] : null;
+                        result = tryPlace(type, [curWMin, curWMax], [curHMin, curHMax], angleRange, curScaleRange);
+                        if (result) return result;
+                        factor -= 0.05;
+                    }
+                    const finalFactor = 0.6;
+                    const curWMin = wMin * finalFactor,
+                        curWMax = wMax * finalFactor;
+                    const curHMin = hMin * finalFactor,
+                        curHMax = hMax * finalFactor;
+                    let curScaleRange = scaleRange ? [sMin * finalFactor, sMax * finalFactor] : null;
+                    return tryPlace(type, [curWMin, curWMax], [curHMin, curHMax], angleRange, curScaleRange);
+                }
+
+                const adjustedConfigs = {};
+                for (let type in configs) {
+                    const cfg = configs[type];
+                    adjustedConfigs[type] = {
+                        wRange: [cfg.wRange[0] * 0.85, cfg.wRange[1] * 0.85],
+                        hRange: [cfg.hRange[0] * 0.85, cfg.hRange[1] * 0.85],
+                        angleRange: cfg.angleRange,
+                        scaleRange: cfg.scaleRange ? [cfg.scaleRange[0] * 0.85, cfg.scaleRange[1] * 0.85] : undefined
+                    };
+                }
+
+                const priorityTypes = ['平行四边形', '长方形', '正方形', '圆形', '三角形'];
+                for (let type of priorityTypes) {
+                    const count = counts[type] || 0;
+                    if (count === 0) continue;
+                    const cfg = adjustedConfigs[type];
+                    for (let i = 0; i < count; i++) {
+                        let result = null;
+                        if (type === '三角形') {
+                            result = ensurePlace(type, cfg.wRange, cfg.hRange, cfg.angleRange, cfg.scaleRange);
+                        } else {
+                            result = ensurePlace(type, cfg.wRange, cfg.hRange, cfg.angleRange, null);
+                        }
+                        if (result) {
+                            const { x, y, w, h, angle, scale, color, skew } = result;
+                            switch (type) {
+                                case '长方形':
+                                    addRect(x, y, w, h, angle, color);
+                                    break;
+                                case '正方形':
+                                    addSquare(x, y, w, angle, color);
+                                    break;
+                                case '圆形':
+                                    addCircle(x, y, w / 2, angle, color);
+                                    break;
+                                case '三角形':
+                                    addTriangle(x, y, scale, angle, color);
+                                    break;
+                                case '平行四边形':
+                                    addPara(x, y, w, h, angle, color, skew);
+                                    break;
+                            }
+                            actualCounts[type] += 1;
+                        }
+                    }
+                }
+                return actualCounts;
+            }
+
+            // ============================================================
+            //  分散图形（第1、2轮）
+            // ============================================================
+            function generateScattered() {
+                let attempts = 0;
+                let actualCounts = null;
+                const configs = {
+                    '长方形': { wRange: [70, 100], hRange: [40, 60], angleRange: [-35, 35] },
+                    '正方形': { wRange: [45, 60], hRange: [45, 60], angleRange: [-75, 75] },
+                    '圆形': { wRange: [50, 70], hRange: [50, 70], angleRange: [0, 360] },
+                    '三角形': { wRange: [40, 55], hRange: [35, 50], angleRange: [-85, 85], scaleRange: [0.8, 1.2] },
+                    '平行四边形': { wRange: [65, 85], hRange: [40, 55], angleRange: [-45, 45] },
+                };
+
+                while (attempts < 40) {
+                    clearCanvas();
+                    const counts = {};
+                    SHAPE_TYPES.forEach(t => { counts[t] = randInt(2, 4); });
+                    const extra = randInt(3, 6);
+                    for (let i = 0; i < extra; i++) {
+                        const type = SHAPE_TYPES[randInt(0, SHAPE_TYPES.length - 1)];
+                        counts[type] += 1;
+                    }
+                    SHAPE_TYPES.forEach(t => {
+                        if (counts[t] > 8) counts[t] = 8;
+                    });
+
+                    actualCounts = drawShapes(counts, configs);
+
+                    const allExist = SHAPE_TYPES.every(t => actualCounts[t] > 0);
+                    if (!allExist) { attempts++; continue; }
+
+                    const candidates = Object.keys(actualCounts).filter(k => actualCounts[k] >= 3 && actualCounts[k] <=
+                    9);
+                    let valid = false;
+                    if (round === 1) {
+                        if (candidates.includes('平行四边形')) valid = true;
+                    } else if (round === 2) {
+                        if (candidates.some(k => k !== '平行四边形')) valid = true;
+                    } else {
+                        if (candidates.length > 0) valid = true;
+                    }
+                    if (valid) break;
+                    attempts++;
+                }
+
+                if (!actualCounts || SHAPE_TYPES.some(t => actualCounts[t] === 0)) {
+                    clearCanvas();
+                    const counts = { '长方形': 3, '正方形': 3, '圆形': 3, '三角形': 3, '平行四边形': 3 };
+                    actualCounts = drawShapes(counts, configs);
+                }
+
+                currentCounts = actualCounts;
+
+                let candidates = Object.keys(actualCounts).filter(k => actualCounts[k] >= 3 && actualCounts[k] <= 9);
+
+                if (round === 1) {
+                    if (candidates.includes('平行四边形')) {
+                        currentShape = '平行四边形';
+                    } else {
+                        if (actualCounts['平行四边形'] > 0) {
+                            currentShape = '平行四边形';
+                        } else {
+                            currentShape = candidates[0] || '正方形';
+                        }
+                    }
+                } else if (round === 2) {
+                    const nonPara = candidates.filter(k => k !== '平行四边形');
+                    if (nonPara.length > 0) {
+                        currentShape = nonPara[Math.floor(Math.random() * nonPara.length)];
+                    } else {
+                        const allNonPara = SHAPE_TYPES.filter(k => k !== '平行四边形');
+                        currentShape = allNonPara[Math.floor(Math.random() * allNonPara.length)];
+                    }
+                } else {
+                    if (round <= 4) {
+                        const unasked = candidates.filter(k => !askedShapes.includes(k));
+                        if (unasked.length > 0) candidates = unasked;
+                    }
+                    if (candidates.length === 0) {
+                        let maxCount = 0,
+                            maxKey = '正方形';
+                        for (let k in actualCounts) {
+                            if (actualCounts[k] > maxCount) {
+                                maxCount = actualCounts[k];
+                                maxKey = k;
+                            }
+                        }
+                        candidates = [maxKey];
+                    }
+                    currentShape = candidates[Math.floor(Math.random() * candidates.length)];
+                }
+
+                if (round <= 4) askedShapes.push(currentShape);
+            }
+
+            // ============================================================
+            //  图案组合（第3、4轮）- 自动缩放以适应画布，整体放大
+            // ============================================================
+            function generatePattern() {
+                clearCanvas();
+
+                if (!patternData || patternData.length === 0) {
+                    patternData = BUILTIN_PATTERNS.slice();
+                }
+
+                let available = [];
+                for (let i = 0; i < patternData.length; i++) {
+                    if (!usedPatternIndices.includes(i)) {
+                        available.push(i);
+                    }
+                }
+
+                if (available.length === 0) {
+                    usedPatternIndices = [];
+                    available = patternData.map((_, i) => i);
+                }
+
+                const idx = available[Math.floor(Math.random() * available.length)];
+                usedPatternIndices.push(idx);
+
+                const template = patternData[idx];
+
+                // ---- 自动缩放和平移 ----
+                let minX = Infinity,
+                    maxX = -Infinity,
+                    minY = Infinity,
+                    maxY = -Infinity;
+                for (let s of template.shapes) {
+                    let x = s.x,
+                        y = s.y,
+                        w = s.w || s.size || (s.r ? s.r * 2 : 0),
+                        h = s.h || s.size || (s.r ? s.r * 2 : 0);
+                    if (s.type === '三角形') {
+                        const base = 50 * s.scale;
+                        const height = 45 * s.scale;
+                        w = base;
+                        h = height;
+                    }
+                    if (x < minX) minX = x;
+                    if (x + w > maxX) maxX = x + w;
+                    if (y < minY) minY = y;
+                    if (y + h > maxY) maxY = y + h;
+                }
+                const patternW = maxX - minX;
+                const patternH = maxY - minY;
+                // 目标区域：画布中央，占85%
+                const targetW = 760 * 0.85;
+                const targetH = 480 * 0.85;
+                const scale = Math.min(targetW / patternW, targetH / patternH);
+                const offsetX = (760 - patternW * scale) / 2 - minX * scale;
+                const offsetY = (480 - patternH * scale) / 2 - minY * scale;
+
+                const actualCounts = { '长方形': 0, '正方形': 0, '圆形': 0, '三角形': 0, '平行四边形': 0 };
+                for (let s of template.shapes) {
+                    const angle = s.angle || 0;
+                    let x = s.x * scale + offsetX;
+                    let y = s.y * scale + offsetY;
+                    let color = randomColor();
+                    switch (s.type) {
+                        case '长方形':
+                            let w = s.w * scale;
+                            let h = s.h * scale;
+                            addRect(x, y, w, h, angle, color);
+                            actualCounts['长方形']++;
+                            break;
+                        case '正方形':
+                            let size = s.size * scale;
+                            addSquare(x, y, size, angle, color);
+                            actualCounts['正方形']++;
+                            break;
+                        case '圆形':
+                            let r = s.r * scale;
+                            addCircle(x, y, r, angle, color);
+                            actualCounts['圆形']++;
+                            break;
+                        case '三角形':
+                            let scaleTri = s.scale * scale;
+                            addTriangle(x, y, scaleTri, angle, color);
+                            actualCounts['三角形']++;
+                            break;
+                        case '平行四边形':
+                            let wPara = s.w * scale;
+                            let hPara = s.h * scale;
+                            addPara(x, y, wPara, hPara, angle, color, s.skew || 0.25);
+                            actualCounts['平行四边形']++;
+                            break;
+                    }
+                }
+                currentCounts = actualCounts;
+                let candidates = Object.keys(actualCounts).filter(k => actualCounts[k] >= 3 && actualCounts[k] <= 9);
+                if (round <= 4) {
+                    const unasked = candidates.filter(k => !askedShapes.includes(k));
+                    if (unasked.length > 0) candidates = unasked;
+                }
+                if (candidates.length === 0) {
+                    let maxCount = 0,
+                        maxKey = '正方形';
+                    for (let k in actualCounts) {
+                        if (actualCounts[k] > maxCount) {
+                            maxCount = actualCounts[k];
+                            maxKey = k;
+                        }
+                    }
+                    candidates = [maxKey];
+                }
+                currentShape = candidates[Math.floor(Math.random() * candidates.length)];
+                if (round <= 4) askedShapes.push(currentShape);
+                resultMsg.textContent = `${template.name}，数一数图中的图形吧！`;
+                resultMsg.className = 'result hint';
+            }
+
+            // ============================================================
+            //  组合图形计数（第5轮）- 黑色轮廓，无间隙，放大，居中，无三角形
+            // ============================================================
+            const COMPOSITE_TEMPLATES = [{
+                name: '2x2正方形组合',
+                shapeType: '正方形',
+                total: 5,
+                draw: function() {
+                    const size = 80,
+                        gap = 0;
+                    // 居中计算：2x2 总宽160，总高160
+                    const startX = (760 - 160) / 2;
+                    const startY = (480 - 160) / 2;
+                    for (let i = 0; i < 2; i++) {
+                        for (let j = 0; j < 2; j++) {
+                            addSquareOutline(startX + i * (size + gap), startY + j * (size + gap), size, 0);
+                        }
+                    }
+                    addHint('图中最多有几个正方形？（包括组合）');
+                }
+            }, {
+                name: '2x3正方形组合',
+                shapeType: '正方形',
+                total: 8,
+                draw: function() {
+                    const size = 60,
+                        gap = 0;
+                    // 2行3列：总宽180，总高120
+                    const startX = (760 - 180) / 2;
+                    const startY = (480 - 120) / 2;
+                    for (let i = 0; i < 2; i++) {
+                        for (let j = 0; j < 3; j++) {
+                            addSquareOutline(startX + i * (size + gap), startY + j * (size + gap), size, 0);
+                        }
+                    }
+                    addHint('图中最多有几个正方形？（包括组合）');
+                }
+            }, {
+                name: '长方形组合',
+                shapeType: '长方形',
+                total: 6,
+                draw: function() {
+                    const w = 100,
+                        h = 50,
+                        gap = 0;
+                    // 3个长方形：总宽300，总高50
+                    const startX = (760 - 300) / 2;
+                    const startY = (480 - 50) / 2;
+                    for (let i = 0; i < 3; i++) {
+                        addRectOutline(startX + i * (w + gap), startY, w, h, 0);
+                    }
+                    addHint('图中最多有几个长方形？（包括组合）');
+                }
+            }, ];
+
+            function addHint(text) {
+                const hint = document.createElement('div');
+                hint.style.position = 'absolute';
+                hint.style.left = '50%';
+                hint.style.top = '10px';
+                hint.style.transform = 'translateX(-50%)';
+                hint.style.fontSize = '18px';
+                hint.style.fontWeight = '700';
+                hint.style.color = '#2c3e50';
+                hint.style.background = 'rgba(255,255,255,0.85)';
+                hint.style.padding = '4px 16px';
+                hint.style.borderRadius = '20px';
+                hint.style.pointerEvents = 'none';
+                hint.textContent = text;
+                sceneWrapper.appendChild(hint);
+            }
+
+            function generateComposite() {
+                clearCanvas();
+                const template = COMPOSITE_TEMPLATES[randInt(0, COMPOSITE_TEMPLATES.length - 1)];
+                template.draw();
+                currentShape = template.shapeType;
+                currentTotal = template.total;
+                currentCounts = {};
+                resultMsg.textContent = `🔍 第 5/5 轮：数出图中所有 ${SHAPE_LABELS[currentShape]} 的个数（包括组合）！`;
+                resultMsg.className = 'result hint';
+            }
+
+            // ============================================================
+            //  高亮图形轮廓
+            // ============================================================
+            function clearHighlights() {
+                document.querySelectorAll('.shape-highlight-green, .shape-highlight-red').forEach(el => {
+                    el.classList.remove('shape-highlight-green', 'shape-highlight-red');
+                });
+                document.querySelectorAll('.shape-outline').forEach(el => {
+                    el.style.outline = 'none';
+                });
+            }
+
+            function highlightShapes(type, color) {
+                clearHighlights();
+                const selector = `[data-type="${type}"]`;
+                const elements = sceneWrapper.querySelectorAll(selector);
+                const cls = color === 'green' ? 'shape-highlight-green' : 'shape-highlight-red';
+                elements.forEach(el => {
+                    el.classList.add(cls);
+                });
+            }
+
+            // ============================================================
+            //  场景自适应缩放
+            // ============================================================
+            function resizeScene() {
+                if (!gameArea || !sceneWrapper) return;
+                const cw = gameArea.clientWidth;
+                const ch = gameArea.clientHeight;
+                const sw = CANVAS_W;
+                const sh = CANVAS_H;
+                const scaleX = cw / sw;
+                const scaleY = ch / sh;
+                const scale = Math.min(scaleX, scaleY);
+                sceneWrapper.style.transform = `scale(${scale})`;
+                sceneWrapper.style.left = (cw - sw * scale) / 2 + 'px';
+                sceneWrapper.style.top = (ch - sh * scale) / 2 + 'px';
+            }
+
+            // ============================================================
+            //  数字键盘逻辑
+            // ============================================================
+            function initNumKeypad() {
+                numKeypad.querySelectorAll('.num-btn[data-value]').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        if (isGameFinished) return;
+                        if (isWaiting) return;
+                        e.stopPropagation();
+                        const val = this.dataset.value;
+                        const current = answerInput.value;
+                        if (current === '0' || current === '') {
+                            answerInput.value = val;
+                        } else {
+                            answerInput.value = current + val;
+                        }
+                        answerInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    });
+                });
+                backspaceBtn.addEventListener('click', function(e) {
+                    if (isGameFinished) return;
+                    if (isWaiting) return;
+                    e.stopPropagation();
+                    const current = answerInput.value;
+                    if (current.length > 0) {
+                        answerInput.value = current.slice(0, -1);
+                        answerInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                });
+                answerInput.addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        checkAnswer();
+                    }
+                });
+            }
+
+            // ============================================================
+            //  计时器
+            // ============================================================
+            function startTimer() {
+                if (isTimerRunning) return;
+                timerSeconds = 0;
+                updateTimerDisplay();
+                isTimerRunning = true;
+                timerBadge.classList.add('active');
+                if (timerInterval) clearInterval(timerInterval);
+                timerInterval = setInterval(function() {
+                    timerSeconds++;
+                    updateTimerDisplay();
+                }, 1000);
+            }
+
+            function stopTimer() {
+                isTimerRunning = false;
+                if (timerInterval) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                }
+                timerBadge.classList.remove('active');
+            }
+
+            function resetTimer() {
+                stopTimer();
+                timerSeconds = 0;
+                updateTimerDisplay();
+            }
+
+            function updateTimerDisplay() {
+                const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+                const secs = String(timerSeconds % 60).padStart(2, '0');
+                timerBadge.textContent = `⏱️ ${mins}:${secs}`;
+            }
+
+            function getTimerString() {
+                const mins = String(Math.floor(timerSeconds / 60)).padStart(2, '0');
+                const secs = String(timerSeconds % 60).padStart(2, '0');
+                return `${mins}:${secs}`;
+            }
+
+            // ============================================================
+            //  API 提交与排行榜
+            // ============================================================
+            async function submitScore(name, cls, score, correctCount, timeStr) {
+                try {
+                    const payload = {
+                        name: name,
+                        class: cls,
+                        score: score,
+                        correct: correctCount,
+                        time: timeStr,
+                        submitted_at: new Date().toISOString()
+                    };
+                    const response = await fetch(API_SUBMIT_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(payload),
+                    });
+                    if (!response.ok) {
+                        console.warn('提交成绩失败:', response.status);
+                    } else {
+                        console.log('成绩提交成功');
+                    }
+                } catch (err) {
+                    console.warn('提交成绩出错:', err);
+                }
+            }
+
+            async function fetchLeaderboard() {
+                try {
+                    const response = await fetch(API_ALL_URL);
+                    if (!response.ok) {
+                        throw new Error('网络请求失败');
+                    }
+                    const data = await response.json();
+                    // 兼容不同返回格式
+                    let submissions = data.submissions || data.data || [];
+                    if (!Array.isArray(submissions)) {
+                        submissions = [];
+                    }
+                    return submissions;
+                } catch (err) {
+                    console.warn('获取排行榜失败:', err);
+                    return [];
+                }
+            }
+
+            function renderLeaderboard(submissions) {
+                // 按用户分组，取最佳成绩（最高分，分数相同则取用时最短）
+                const userBest = {};
+                for (let item of submissions) {
+                    const name = item.name || item.姓名 || '未知';
+                    const cls = item.class || item.班级 || '';
+                    const score = parseInt(item.score || item.分数 || 0, 10);
+                    const time = item.time || item.用时 || '99:99';
+                    const correct = parseInt(item.correct || item.正确数 || 0, 10);
+                    const key = name + '|' + cls;
+                    if (!userBest[key] || score > userBest[key].score || (score === userBest[key].score && time < userBest[
+                            key].time)) {
+                        userBest[key] = { name, cls, score, time, correct };
+                    }
+                }
+
+                const list = Object.values(userBest);
+                // 按分数降序，分数相同按用时升序
+                list.sort((a, b) => {
+                    if (b.score !== a.score) return b.score - a.score;
+                    return a.time.localeCompare(b.time);
+                });
+
+                // 渲染表格
+                const tbody = leaderboardBody;
+                tbody.innerHTML = '';
+                if (list.length === 0) {
+                    leaderboardTable.style.display = 'none';
+                    leaderboardEmpty.style.display = 'block';
+                    leaderboardLoading.style.display = 'none';
+                    return;
+                }
+                leaderboardTable.style.display = 'table';
+                leaderboardEmpty.style.display = 'none';
+                leaderboardLoading.style.display = 'none';
+
+                list.forEach((item, index) => {
+                    const tr = document.createElement('tr');
+                    if (index === 0) tr.className = 'rank-1';
+                    else if (index === 1) tr.className = 'rank-2';
+                    else if (index === 2) tr.className = 'rank-3';
+                    const rankTd = document.createElement('td');
+                    rankTd.textContent = index + 1;
+                    const nameTd = document.createElement('td');
+                    nameTd.textContent = item.name;
+                    const classTd = document.createElement('td');
+                    classTd.textContent = item.cls;
+                    const scoreTd = document.createElement('td');
+                    scoreTd.textContent = item.score;
+                    const timeTd = document.createElement('td');
+                    timeTd.textContent = item.time;
+                    tr.appendChild(rankTd);
+                    tr.appendChild(nameTd);
+                    tr.appendChild(classTd);
+                    tr.appendChild(scoreTd);
+                    tr.appendChild(timeTd);
+                    tbody.appendChild(tr);
+                });
+            }
+
+            async function refreshLeaderboard() {
+                leaderboardLoading.style.display = 'block';
+                leaderboardTable.style.display = 'none';
+                leaderboardEmpty.style.display = 'none';
+                const data = await fetchLeaderboard();
+                renderLeaderboard(data);
+            }
+
+            // ============================================================
+            //  游戏逻辑
+            // ============================================================
+            function updateScoreUI() {
+                scoreDisplay.textContent = `${score} / ${MAX_SCORE}`;
+            }
+
+            function nextQuestion() {
+                if (isGameFinished) return;
+                if (isWaiting) return;
+                clearHighlights();
+                roundScored = false;
+
+                if (round >= TOTAL_ROUNDS) {
+                    isGameFinished = true;
+                    submitBtn.disabled = true;
+                    answerInput.disabled = true;
+                    nextBtn.disabled = true;
+                    numKeypad.querySelectorAll('.num-btn').forEach(b => b.disabled = true);
+
+                    // 停止计时
+                    stopTimer();
+
+                    if (isExamMode) {
+                        // 提交成绩
+                        const timeStr = getTimerString();
+                        submitScore(examName, examClass, score, examCorrectCount, timeStr);
+
+                        showScoreModal(timeStr);
+                        resultMsg.textContent = `📝 答题完成！得分：${score} / ${MAX_SCORE}，用时 ${timeStr}`;
+                        resultMsg.className = 'result finished';
+                        modeBtn.textContent = '📊 查看成绩';
+                        modeBtn.classList.add('exam-active');
+                    } else {
+                        resultMsg.textContent = `🎉 游戏结束！您的总得分：${score} / ${MAX_SCORE}`;
+                        resultMsg.className = 'result finished';
+                    }
+                    shapeNameLabel.textContent = '---';
+                    roundHint.textContent = '已完成';
+                    // 刷新排行榜
+                    refreshLeaderboard();
+                    return;
+                }
+
+                round++;
+                if (round <= 2) {
+                    generateScattered();
+                    roundHint.textContent = `第 ${round}/${TOTAL_ROUNDS} 轮 · 分散图形`;
+                } else if (round <= 4) {
+                    generatePattern();
+                    roundHint.textContent = `第 ${round}/${TOTAL_ROUNDS} 轮 · 图案组合`;
+                } else {
+                    generateComposite();
+                    roundHint.textContent = `第 ${round}/${TOTAL_ROUNDS} 轮 · 组合计数`;
+                }
+
+                if (round === 5) {
+                    shapeNameLabel.textContent = SHAPE_LABELS[currentShape] + '（含组合）';
+                } else {
+                    shapeNameLabel.textContent = SHAPE_LABELS[currentShape];
+                }
+                answerInput.value = '';
+                if (!resultMsg.textContent.includes('图案') && !resultMsg.textContent.includes('组合')) {
+                    resultMsg.textContent = `🔍 第 ${round}/${TOTAL_ROUNDS} 轮，数一数吧！`;
+                    resultMsg.className = 'result info';
+                }
+                wrongCount = 0;
+                updateScoreUI();
+                isWaiting = false;
+                submitBtn.disabled = false;
+                answerInput.disabled = false;
+                nextBtn.disabled = false;
+                resizeScene();
+            }
+
+            function checkAnswer() {
+                if (isGameFinished) {
+                    resultMsg.textContent = '游戏已结束，点击“重玩”重新开始。';
+                    resultMsg.className = 'result info';
+                    return;
+                }
+                if (isWaiting) {
+                    resultMsg.textContent = '⏳ 请稍候，正在进入下一题…';
+                    resultMsg.className = 'result info';
+                    return;
+                }
+                if (roundScored) {
+                    resultMsg.textContent = '⏳ 本轮已得分，点击“下一轮”继续';
+                    resultMsg.className = 'result info';
+                    return;
+                }
+
+                const raw = answerInput.value.trim();
+                const ans = parseInt(raw, 10);
+                if (isNaN(ans) || raw === '') {
+                    resultMsg.textContent = '⚠️ 请输入一个有效的数字！';
+                    resultMsg.className = 'result wrong';
+                    return;
+                }
+
+                let correct;
+                if (round === 5) {
+                    correct = currentTotal;
+                } else {
+                    correct = currentCounts[currentShape] || 0;
+                }
+
+                const isCorrect = (ans === correct);
+                if (isCorrect) {
+                    highlightShapes(currentShape, 'green');
+                } else {
+                    highlightShapes(currentShape, 'red');
+                }
+
+                if (isCorrect) {
+                    let earned = 0,
+                        msg = '';
+                    if (wrongCount === 0) {
+                        earned = 20;
+                        msg = '🎉 一次性答对！+20分';
+                    } else if (wrongCount === 1) {
+                        earned = 10;
+                        msg = '💪 错1次后答对！+10分';
+                    } else {
+                        earned = 5;
+                        msg = '😅 错2次及以上答对！+5分';
+                    }
+                    score += earned;
+                    roundScored = true;
+                    if (isExamMode) examCorrectCount++;
+                    updateScoreUI();
+                    resultMsg.textContent = `✅ 完全正确！ ${msg}`;
+                    resultMsg.className = 'result score-info';
+                    isWaiting = true;
+                    submitBtn.disabled = true;
+                    answerInput.disabled = true;
+                    setTimeout(() => {
+                        submitBtn.disabled = false;
+                        answerInput.disabled = false;
+                        isWaiting = false;
+                        nextQuestion();
+                    }, 1200);
+                } else {
+                    wrongCount++;
+                    resultMsg.textContent = `❌ 再数数看… 再试一次！`;
+                    resultMsg.className = 'result try-again';
+                    answerInput.value = '';
+                    answerInput.focus();
+                }
+            }
+
+            function goToNextRound() {
+                if (isGameFinished) {
+                    resultMsg.textContent = '游戏已结束，点击“重玩”重新开始。';
+                    resultMsg.className = 'result info';
+                    return;
+                }
+                if (isWaiting) {
+                    resultMsg.textContent = '⏳ 请稍候，正在处理中…';
+                    resultMsg.className = 'result info';
+                    return;
+                }
+                if (roundScored) {
+                    isWaiting = true;
+                    submitBtn.disabled = true;
+                    answerInput.disabled = true;
+                    setTimeout(() => {
+                        submitBtn.disabled = false;
+                        answerInput.disabled = false;
+                        isWaiting = false;
+                        nextQuestion();
+                    }, 300);
+                    return;
+                }
+
+                resultMsg.textContent = `⏭️ 已跳过第 ${round} 轮，该轮得 0 分`;
+                resultMsg.className = 'result skipped';
+                roundScored = true;
+                isWaiting = true;
+                submitBtn.disabled = true;
+                answerInput.disabled = true;
+                setTimeout(() => {
+                    submitBtn.disabled = false;
+                    answerInput.disabled = false;
+                    isWaiting = false;
+                    nextQuestion();
+                }, 800);
+            }
+
+            // ============================================================
+            //  答题模式
+            // ============================================================
+            function openExamModal() {
+                modeModal.classList.add('open');
+                nameInput.value = '';
+                nameInput.focus();
+            }
+
+            function closeExamModal() {
+                modeModal.classList.remove('open');
+            }
+
+            function startExam() {
+                const name = nameInput.value.trim();
+                if (!name) {
+                    alert('请填写您的姓名！');
+                    nameInput.focus();
+                    return;
+                }
+                const cls = classSelect.value;
+                examName = name;
+                examClass = cls;
+                isExamMode = true;
+                examCorrectCount = 0;
+                usedPatternIndices = [];
+                modeBadge.classList.add('active');
+                modeBtn.textContent = '📝 答题中...';
+                modeBtn.classList.add('exam-active');
+                closeExamModal();
+                resetGameForExam();
+                // 启动计时器
+                startTimer();
+            }
+
+            function resetGameForExam() {
+                isWaiting = false;
+                isGameFinished = false;
+                score = 0;
+                round = 0;
+                wrongCount = 0;
+                shapeItems = [];
+                askedShapes = [];
+                examCorrectCount = 0;
+                usedPatternIndices = [];
+                roundScored = false;
+                resetTimer();
+                updateScoreUI();
+                submitBtn.disabled = false;
+                answerInput.disabled = false;
+                nextBtn.disabled = false;
+                numKeypad.querySelectorAll('.num-btn').forEach(b => b.disabled = false);
+                nextQuestion();
+            }
+
+            function showScoreModal(timeStr) {
+                resultName.textContent = examName || '-';
+                resultClass.textContent = examClass || '-';
+                resultCorrect.textContent = `${examCorrectCount} / ${TOTAL_ROUNDS}`;
+                resultTime.textContent = timeStr || getTimerString();
+                resultTotal.textContent = score;
+                scoreModal.classList.add('open');
+            }
+
+            function closeScoreModal() {
+                scoreModal.classList.remove('open');
+            }
+
+            function viewScore() {
+                if (isGameFinished && isExamMode) {
+                    showScoreModal(getTimerString());
+                } else if (isExamMode) {
+                    resultMsg.textContent = '⏳ 答题进行中，请完成所有题目！';
+                    resultMsg.className = 'result info';
+                } else {
+                    resultMsg.textContent = '请先进入答题模式！';
+                    resultMsg.className = 'result info';
+                }
+            }
+
+            // ============================================================
+            //  重置
+            // ============================================================
+            function resetGame() {
+                isExamMode = false;
+                modeBadge.classList.remove('active');
+                modeBtn.textContent = '📝 答题模式';
+                modeBtn.classList.remove('exam-active');
+                closeScoreModal();
+                stopTimer();
+                resetTimer();
+                isWaiting = false;
+                isGameFinished = false;
+                score = 0;
+                round = 0;
+                wrongCount = 0;
+                shapeItems = [];
+                askedShapes = [];
+                usedPatternIndices = [];
+                examCorrectCount = 0;
+                roundScored = false;
+                updateScoreUI();
+                submitBtn.disabled = false;
+                answerInput.disabled = false;
+                nextBtn.disabled = false;
+                numKeypad.querySelectorAll('.num-btn').forEach(b => b.disabled = false);
+                nextQuestion();
+                // 刷新排行榜
+                refreshLeaderboard();
+            }
+
+            // ============================================================
+            //  事件绑定
+            // ============================================================
+            submitBtn.addEventListener('click', checkAnswer);
+            resetBtn.addEventListener('click', resetGame);
+            nextBtn.addEventListener('click', goToNextRound);
+
+            answerInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    checkAnswer();
+                }
+            });
+
+            modeBtn.addEventListener('click', function() {
+                if (isExamMode && isGameFinished) {
+                    viewScore();
+                } else if (isExamMode) {
+                    resultMsg.textContent = '⏳ 答题进行中，请完成所有题目！';
+                    resultMsg.className = 'result info';
+                } else {
+                    openExamModal();
+                }
+            });
+
+            startExamBtn.addEventListener('click', startExam);
+            cancelExamBtn.addEventListener('click', closeExamModal);
+            closeScoreBtn.addEventListener('click', closeScoreModal);
+
+            modeModal.addEventListener('click', function(e) {
+                if (e.target === this) closeExamModal();
+            });
+            scoreModal.addEventListener('click', function(e) {
+                if (e.target === this) closeScoreModal();
+            });
+
+            nameInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    startExam();
+                }
+            });
+
+            // 刷新排行榜
+            refreshLeaderboardBtn.addEventListener('click', refreshLeaderboard);
+
+            // 点击画布聚焦输入框
+            gameArea.addEventListener('click', function() {
+                if (!answerInput.disabled) answerInput.focus();
+            });
+
+            // 窗口自适应
+            let resizeTimer = null;
+            window.addEventListener('resize', () => {
+                if (resizeTimer) cancelAnimationFrame(resizeTimer);
+                resizeTimer = requestAnimationFrame(() => {
+                    resizeScene();
+                });
+            });
+
+            // ============================================================
+            //  初始化
+            // ============================================================
+            function init() {
+                patternData = BUILTIN_PATTERNS.slice();
+                usedPatternIndices = [];
+                resetGame();
+                initNumKeypad();
+                // 首次加载排行榜
+                refreshLeaderboard();
+                console.log(`✅ 平面图形数数小游戏已启动 (第5轮居中，无三角形，无API)`);
+            }
+
+            init();
+        })();
+    </script>
+
+</body>
+</html>
