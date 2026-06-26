@@ -373,26 +373,33 @@
         .btn-secondary:hover {
             background: #7f92aa;
         }
+        /* 弱化的“跳过”按钮 */
         .btn-next {
-            background: #27ae60;
-            box-shadow: 0 4px 0 #1a7a42;
+            background: #b0b8c5;
+            box-shadow: 0 4px 0 #7a8290;
+            color: #4a5568;
+            font-weight: 500;
         }
         .btn-next:hover {
-            background: #2ecc71;
-            box-shadow: 0 6px 0 #1a7a42;
+            background: #c5cdd9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #7a8290;
         }
         .btn-next:active {
             transform: translateY(2px);
-            box-shadow: 0 2px 0 #1a7a42;
+            box-shadow: 0 2px 0 #7a8290;
+        }
+        .btn-next:disabled {
+            opacity: 0.5;
+            box-shadow: 0 4px 0 #7a8290 !important;
+            transform: none !important;
+            cursor: not-allowed;
         }
         .btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
             transform: none !important;
             box-shadow: 0 4px 0 #1a4f72 !important;
-        }
-        .btn-next:disabled {
-            box-shadow: 0 4px 0 #1a7a42 !important;
         }
         .btn-secondary:disabled {
             box-shadow: 0 4px 0 #3f4d5e !important;
@@ -836,7 +843,7 @@
                 <div class="input-group">
                     <input type="number" id="answerInput" placeholder="数字" min="0" inputmode="numeric" />
                     <button class="btn" id="submitBtn">✓ 提交</button>
-                    <button class="btn btn-next" id="nextBtn">➡ 下一轮</button>
+                    <button class="btn btn-next" id="nextBtn">⏭ 跳过</button>
                     <button class="btn btn-secondary" id="resetBtn">⟳ 重玩</button>
                 </div>
             </div>
@@ -861,12 +868,12 @@
         <!-- ===== 排行榜 ===== -->
         <div class="leaderboard" id="leaderboard">
             <div class="leaderboard-header">
-                <h3>🏅 排行榜</h3>
+                <h3>🏅 今日排行榜</h3>
                 <button class="refresh-btn" id="refreshLeaderboardBtn">⟳ 刷新</button>
             </div>
             <div class="leaderboard-table-wrap" id="leaderboardWrap">
                 <div class="leaderboard-loading" id="leaderboardLoading">⏳ 加载中...</div>
-                <div class="leaderboard-empty" id="leaderboardEmpty" style="display:none;">暂无记录，快来挑战吧！</div>
+                <div class="leaderboard-empty" id="leaderboardEmpty" style="display:none;">今日暂无记录，快来挑战吧！</div>
                 <table class="leaderboard-table" id="leaderboardTable" style="display:none;">
                     <thead>
                         <tr>
@@ -1793,6 +1800,16 @@
             const MAX_ATTEMPTS = 800;
 
             // ============================================================
+            //  辅助函数：获取今天的日期字符串 (YYYY-MM-DD)
+            // ============================================================
+            function getTodayStr() {
+                const d = new Date();
+                return d.getFullYear() + '-' +
+                    String(d.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(d.getDate()).padStart(2, '0');
+            }
+
+            // ============================================================
             //  随机工具
             // ============================================================
             function randFloat(min, max) { return Math.random() * (max - min) + min; }
@@ -2571,7 +2588,7 @@
             }
 
             // ============================================================
-            //  API 提交与排行榜
+            //  API 提交与排行榜（仅显示当天）
             // ============================================================
             async function submitScore(name, cls, score, correctCount, timeStr) {
                 try {
@@ -2620,9 +2637,23 @@
             }
 
             function renderLeaderboard(submissions) {
-                // 按用户分组，取最佳成绩（最高分，分数相同则取用时最短）
+                const today = getTodayStr();
+
+                // 1. 过滤出今天的记录
+                const todaySubmissions = submissions.filter(item => {
+                    const submittedAt = item.submitted_at || item.提交时间 || '';
+                    // 尝试从字符串中提取日期部分 (YYYY-MM-DD)
+                    const dateMatch = submittedAt.match(/^\d{4}-\d{2}-\d{2}/);
+                    if (dateMatch) {
+                        return dateMatch[0] === today;
+                    }
+                    // 如果没有日期字段，则默认不过滤（但我们的提交都包含 submitted_at）
+                    return false;
+                });
+
+                // 2. 按用户分组，取最佳成绩（最高分，分数相同则取用时最短）
                 const userBest = {};
-                for (let item of submissions) {
+                for (let item of todaySubmissions) {
                     const name = item.name || item.姓名 || '未知';
                     const cls = item.class || item.班级 || '';
                     const score = parseInt(item.score || item.分数 || 0, 10);
@@ -2774,7 +2805,7 @@
                     return;
                 }
                 if (roundScored) {
-                    resultMsg.textContent = '⏳ 本轮已得分，点击“下一轮”继续';
+                    resultMsg.textContent = '⏳ 本轮已得分，点击“跳过”继续';
                     resultMsg.className = 'result info';
                     return;
                 }
