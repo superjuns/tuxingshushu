@@ -586,6 +586,11 @@
             transform: translateY(2px);
             box-shadow: 0 2px 0 #1a7a42;
         }
+        .modal-box .btn-start:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
         .modal-box .btn-cancel {
             margin-top: 12px;
             padding: 10px;
@@ -601,6 +606,34 @@
         }
         .modal-box .btn-cancel:hover {
             background: #d5dce6;
+        }
+        /* 白名单反馈样式 */
+        .whitelist-feedback {
+            margin: 8px 0 12px 0;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            display: none;
+        }
+        .whitelist-feedback.success {
+            display: block;
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .whitelist-feedback.error {
+            display: block;
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .whitelist-feedback.loading {
+            display: block;
+            background: #e2e3e5;
+            color: #383d41;
+            border: 1px solid #d6d8db;
         }
         .score-modal .modal-box {
             max-width: 480px;
@@ -911,6 +944,8 @@
                 <label for="nameInput">姓名</label>
                 <input type="text" id="nameInput" placeholder="请输入您的姓名" maxlength="10" />
             </div>
+            <!-- 白名单反馈区域 -->
+            <div id="whitelistFeedback" class="whitelist-feedback"></div>
             <button class="btn-start" id="startExamBtn">开始答题</button>
             <button class="btn-cancel" id="cancelExamBtn">取消</button>
         </div>
@@ -1726,8 +1761,9 @@
                 '三角形': '三角形',
                 '平行四边形': '平行四边形',
             };
-            const API_SUBMIT_URL = 'https://wzkjgz.site/api/vylw99t9pn';
+            const API_SUBMIT_URL = 'https://quickform.cn/api/vylw99t9pn';
             const API_ALL_URL = 'https://wzkjgz.site/api/vylw99t9pn/all';
+            const API_WHITELIST_URL = 'https://wzkjgz.site/api/5tmbx2o6rg/all';
 
             // ============================================================
             //  游戏状态
@@ -1778,6 +1814,7 @@
             const nameInput = document.getElementById('nameInput');
             const startExamBtn = document.getElementById('startExamBtn');
             const cancelExamBtn = document.getElementById('cancelExamBtn');
+            const whitelistFeedback = document.getElementById('whitelistFeedback');
 
             const scoreModal = document.getElementById('scoreModal');
             const resultName = document.getElementById('resultName');
@@ -2280,15 +2317,35 @@
                 }
 
                 let available = [];
+                // 如果是第4轮，过滤掉包含三角形的模板
+                const isRound4 = (round === 4);
                 for (let i = 0; i < patternData.length; i++) {
-                    if (!usedPatternIndices.includes(i)) {
-                        available.push(i);
+                    if (usedPatternIndices.includes(i)) continue;
+                    const template = patternData[i];
+                    if (isRound4) {
+                        // 检查是否包含三角形
+                        const hasTriangle = template.shapes.some(s => s.type === '三角形');
+                        if (hasTriangle) continue; // 跳过包含三角形的模板
                     }
+                    available.push(i);
                 }
 
                 if (available.length === 0) {
                     usedPatternIndices = [];
-                    available = patternData.map((_, i) => i);
+                    // 重新构建可用列表，同样应用过滤
+                    available = [];
+                    for (let i = 0; i < patternData.length; i++) {
+                        const template = patternData[i];
+                        if (isRound4) {
+                            const hasTriangle = template.shapes.some(s => s.type === '三角形');
+                            if (hasTriangle) continue;
+                        }
+                        available.push(i);
+                    }
+                    // 如果还没有，就全部包括（但这种情况很少）
+                    if (available.length === 0) {
+                        available = patternData.map((_, i) => i);
+                    }
                 }
 
                 const idx = available[Math.floor(Math.random() * available.length)];
@@ -2719,6 +2776,33 @@
             }
 
             // ============================================================
+            //  白名单校验
+            // ============================================================
+            async function checkWhitelist(name, cls) {
+                try {
+                    const response = await fetch(API_WHITELIST_URL);
+                    if (!response.ok) {
+                        console.warn('白名单接口请求失败:', response.status);
+                        return false;
+                    }
+                    const data = await response.json();
+                    const submissions = data.submissions || [];
+                    if (!Array.isArray(submissions)) {
+                        return false;
+                    }
+                    // 检查是否存在匹配的记录（姓名和班级均匹配）
+                    return submissions.some(item => {
+                        const itemName = item.name || '';
+                        const itemClass = item.class || '';
+                        return itemName.trim() === name.trim() && itemClass.trim() === cls.trim();
+                    });
+                } catch (err) {
+                    console.warn('白名单校验出错:', err);
+                    return false;
+                }
+            }
+
+            // ============================================================
             //  游戏逻辑
             // ============================================================
             function updateScoreUI() {
@@ -2914,32 +2998,75 @@
                 modeModal.classList.add('open');
                 nameInput.value = '';
                 nameInput.focus();
+                startExamBtn.disabled = false;
+                startExamBtn.textContent = '开始答题';
+                // 清空反馈
+                whitelistFeedback.className = 'whitelist-feedback';
+                whitelistFeedback.textContent = '';
             }
 
             function closeExamModal() {
                 modeModal.classList.remove('open');
+                startExamBtn.disabled = false;
+                startExamBtn.textContent = '开始答题';
+                // 清空反馈
+                whitelistFeedback.className = 'whitelist-feedback';
+                whitelistFeedback.textContent = '';
             }
 
-            function startExam() {
+            async function startExam() {
                 const name = nameInput.value.trim();
                 if (!name) {
-                    alert('请填写您的姓名！');
+                    whitelistFeedback.className = 'whitelist-feedback error';
+                    whitelistFeedback.textContent = '⚠️ 请填写您的姓名！';
                     nameInput.focus();
                     return;
                 }
                 const cls = classSelect.value;
-                examName = name;
-                examClass = cls;
-                isExamMode = true;
-                examCorrectCount = 0;
-                usedPatternIndices = [];
-                modeBadge.classList.add('active');
-                modeBtn.textContent = '📝 答题中...';
-                modeBtn.classList.add('exam-active');
-                closeExamModal();
-                resetGameForExam();
-                // 启动计时器
-                startTimer();
+
+                // 禁用按钮，显示校验中
+                startExamBtn.disabled = true;
+                startExamBtn.textContent = '⏳ 校验中...';
+                whitelistFeedback.className = 'whitelist-feedback loading';
+                whitelistFeedback.textContent = '⏳ 正在校验白名单...';
+
+                try {
+                    // 白名单校验
+                    const isWhitelisted = await checkWhitelist(name, cls);
+                    if (!isWhitelisted) {
+                        whitelistFeedback.className = 'whitelist-feedback error';
+                        whitelistFeedback.textContent = '❌ 您不在白名单中，请联系管理员添加。';
+                        startExamBtn.disabled = false;
+                        startExamBtn.textContent = '开始答题';
+                        return;
+                    }
+
+                    // 通过校验，进入答题模式
+                    whitelistFeedback.className = 'whitelist-feedback success';
+                    whitelistFeedback.textContent = '✅ 校验通过，即将开始答题...';
+                    examName = name;
+                    examClass = cls;
+                    isExamMode = true;
+                    examCorrectCount = 0;
+                    usedPatternIndices = [];
+                    modeBadge.classList.add('active');
+                    modeBtn.textContent = '📝 答题中...';
+                    modeBtn.classList.add('exam-active');
+
+                    // 延迟关闭弹窗，让用户看到成功反馈
+                    setTimeout(() => {
+                        closeExamModal();
+                        resetGameForExam();
+                        // 启动计时器
+                        startTimer();
+                    }, 600);
+                } catch (err) {
+                    console.warn('白名单校验异常:', err);
+                    whitelistFeedback.className = 'whitelist-feedback error';
+                    whitelistFeedback.textContent = '❌ 校验失败，请稍后重试。';
+                    startExamBtn.disabled = false;
+                    startExamBtn.textContent = '开始答题';
+                }
             }
 
             function resetGameForExam() {
@@ -3057,7 +3184,8 @@
             nameInput.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter') {
                     e.preventDefault();
-                    startExam();
+                    // 触发点击开始答题
+                    startExamBtn.click();
                 }
             });
 
