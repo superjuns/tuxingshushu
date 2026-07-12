@@ -1840,10 +1840,9 @@
             //  辅助函数：获取今天的日期字符串 (YYYY-MM-DD)
             // ============================================================
             function getTodayStr() {
-                const d = new Date();
-                return d.getFullYear() + '-' +
-                    String(d.getMonth() + 1).padStart(2, '0') + '-' +
-                    String(d.getDate()).padStart(2, '0');
+                var d = new Date();
+                d.setTime(d.getTime() + 8 * 3600 * 1000);
+                return d.toISOString().slice(0, 10);
             }
 
             // ============================================================
