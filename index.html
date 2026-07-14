@@ -3082,7 +3082,7 @@
                     examCorrectCount = 0;
                     usedPatternIndices = [];
                     modeBadge.classList.add('active');
-                    modeBtn.textContent = '📝 答题中...';
+                    modeBtn.textContent = '⏹ 结束答题';
                     modeBtn.classList.add('exam-active');
 
                     // 延迟关闭弹窗，让用户看到成功反馈
@@ -3195,8 +3195,32 @@
                 if (isExamMode && isGameFinished) {
                     viewScore();
                 } else if (isExamMode) {
-                    resultMsg.textContent = '⏳ 答题进行中，请完成所有题目！';
+                    // 手动结束答题：不提交成绩，直接回到自由模式
+                    stopTimer();
+                    isExamMode = false;
+                    examCorrectCount = 0;
+                    usedPatternIndices = [];
+                    modeBtn.textContent = '📝 答题模式';
+                    modeBtn.classList.remove('exam-active');
+                    modeBadge.classList.remove('active');
+                    resultMsg.textContent = '已退出答题模式';
                     resultMsg.className = 'result info';
+                    // 重置游戏状态
+                    isWaiting = false;
+                    isGameFinished = false;
+                    score = 0;
+                    round = 0;
+                    wrongCount = 0;
+                    shapeItems = [];
+                    askedShapes = [];
+                    roundScored = false;
+                    resetTimer();
+                    updateScoreUI();
+                    submitBtn.disabled = false;
+                    answerInput.disabled = false;
+                    nextBtn.disabled = false;
+                    numKeypad.querySelectorAll('.num-btn').forEach(b => b.disabled = false);
+                    nextQuestion();
                 } else {
                     openExamModal();
                 }
