@@ -3283,14 +3283,13 @@
                 initNumKeypad();
                 // 首次加载排行榜
                 refreshLeaderboard();
+                // URL参数自动登录（平台跳转时免输入）
+                tryAutoLoginFromUrl().catch(() => {});
                 console.log(`✅ 平面图形数数小游戏已启动 (第5轮居中，无三角形，无API)`);
             }
 
             init();
         })();
-    
-            // URL参数自动登录（平台跳转时免输入）
-            tryAutoLoginFromUrl();
         </script>
 
 </body>
