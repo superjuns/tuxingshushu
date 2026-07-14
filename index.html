@@ -3019,9 +3019,14 @@
                 const savedCls = localStorage.getItem('tuxingshushu_class');
                 const savedName = localStorage.getItem('tuxingshushu_name');
                 if (savedCls && savedName && !isExamMode) {
-                    classSelect.value = savedCls;
+                    // 兼容纯数字和带"班"字的格式
+                    const displayCls = savedCls.includes('班') ? savedCls : savedCls + '班';
+                    classSelect.value = displayCls;
                     nameInput.value = savedName;
-                    startExam();
+                    startExam().catch(() => {
+                        resultMsg.textContent = '⚠️ 开始答题失败，请重试';
+                        resultMsg.className = 'result error';
+                    });
                     return;
                 }
                 modeModal.classList.add('open');
