@@ -1765,6 +1765,27 @@
             const API_ALL_URL = 'https://wzkjgz.site/api/vylw99t9pn/all';
             const API_WHITELIST_URL = 'https://wzkjgz.site/api/5tmbx2o6rg/all';
 
+            // URL参数自动登录工具函数
+            function getUrlParam(name) {
+                return new URLSearchParams(window.location.search).get(name) || '';
+            }
+            function normStr(s) {
+                return String(s || '').replace(/班/g, '').replace(/\s/g, '').toLowerCase();
+            }
+            // URL参数自动登录（平台跳转时免输入）
+            async function tryAutoLoginFromUrl() {
+                const cls = getUrlParam('class') || getUrlParam('cls') || getUrlParam('班级');
+                const name = getUrlParam('name') || getUrlParam('姓名');
+                if (!cls || !name) return false;
+                const normCls = /^\d+$/.test(cls) ? cls + '班' : cls;
+                try {
+                    const allowed = await checkWhitelist(name, normCls);
+                    if (!allowed) return false;
+                    localStorage.setItem('tuxingshushu_class', normCls);
+                    localStorage.setItem('tuxingshushu_name', name);
+                    return true;
+                } catch (e) { return false; }
+            }
             // ============================================================
             //  游戏状态
             // ============================================================
@@ -3014,6 +3035,16 @@
             }
 
             async function startExam() {
+                // 自动填充：从 localStorage 读取登录信息
+                if (!nameInput.value) {
+                    const savedCls = localStorage.getItem('tuxingshushu_class');
+                    const savedName = localStorage.getItem('tuxingshushu_name');
+                    if (savedCls && savedName) {
+                        classSelect.value = savedCls.replace('班', '');
+                        nameInput.value = savedName;
+                    }
+                }
+
                 const name = nameInput.value.trim();
                 if (!name) {
                     whitelistFeedback.className = 'whitelist-feedback error';
@@ -3046,6 +3077,8 @@
                     examName = name;
                     examClass = cls;
                     isExamMode = true;
+                localStorage.setItem('tuxingshushu_class', classSelect.value + '班');
+                localStorage.setItem('tuxingshushu_name', name);
                     examCorrectCount = 0;
                     usedPatternIndices = [];
                     modeBadge.classList.add('active');
@@ -3220,7 +3253,10 @@
 
             init();
         })();
-    </script>
+    
+            // URL参数自动登录（平台跳转时免输入）
+            tryAutoLoginFromUrl();
+        </script>
 
 </body>
 </html>
