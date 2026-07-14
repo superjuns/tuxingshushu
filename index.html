@@ -3015,8 +3015,19 @@
             //  答题模式
             // ============================================================
             function openExamModal() {
+                // 已有登录信息，直接开始答题
+                const savedCls = localStorage.getItem('tuxingshushu_class');
+                const savedName = localStorage.getItem('tuxingshushu_name');
+                if (savedCls && savedName && !isExamMode) {
+                    classSelect.value = savedCls;
+                    nameInput.value = savedName;
+                    startExam();
+                    return;
+                }
                 modeModal.classList.add('open');
-                nameInput.value = '';
+                // 自动填充
+                if (savedCls) classSelect.value = savedCls;
+                if (savedName && !nameInput.value) nameInput.value = savedName;
                 nameInput.focus();
                 startExamBtn.disabled = false;
                 startExamBtn.textContent = '开始答题';
@@ -3040,7 +3051,7 @@
                     const savedCls = localStorage.getItem('tuxingshushu_class');
                     const savedName = localStorage.getItem('tuxingshushu_name');
                     if (savedCls && savedName) {
-                        classSelect.value = savedCls.replace('班', '');
+                        classSelect.value = savedCls;
                         nameInput.value = savedName;
                     }
                 }
