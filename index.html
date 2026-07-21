@@ -967,6 +967,23 @@
     </div>
 
     <script>
+// === Supabase 配置（自动生成）===
+const SUPABASE_KEY = 'sb_publishable_EAfnJgOY7VsXPdZkEcrvBA_0qkNGlyD';
+const _origFetch = window.fetch;
+window.fetch = function(url, options) {
+    options = options || {};
+    var u = (typeof url === 'string') ? url : (url && url.url) || '';
+    if (u.indexOf('bjugehxenrvaqtodjkbc.supabase.co') !== -1) {
+        options.headers = Object.assign({}, options.headers || {}, {
+            'apikey': SUPABASE_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_KEY,
+            'Content-Type': 'application/json'
+        });
+    }
+    return _origFetch.call(this, url, options);
+};
+// === Supabase 配置结束 ===
+
         (function() {
             'use strict';
 
@@ -1761,9 +1778,9 @@
                 '三角形': '三角形',
                 '平行四边形': '平行四边形',
             };
-            const API_SUBMIT_URL = 'https://wzkjgz.site/api/vylw99t9pn';
-            const API_ALL_URL = 'https://wzkjgz.site/api/vylw99t9pn/all';
-            const API_WHITELIST_URL = 'https://wzkjgz.site/api/5tmbx2o6rg/all';
+            const API_SUBMIT_URL = 'https://bjugehxenrvaqtodjkbc.supabase.co/rest/v1/scores_tuxingshushu';
+            const API_ALL_URL = 'https://bjugehxenrvaqtodjkbc.supabase.co/rest/v1/scores_tuxingshushu?select=*';
+            const API_WHITELIST_URL = 'https://bjugehxenrvaqtodjkbc.supabase.co/rest/v1/whitelist?select=*';
 
             // URL参数自动登录工具函数
             function getUrlParam(name) {
@@ -2702,7 +2719,7 @@
                     }
                     const data = await response.json();
                     // 兼容不同返回格式
-                    let submissions = data.submissions || data.data || [];
+                    let submissions = data || data.data || [];
                     if (!Array.isArray(submissions)) {
                         submissions = [];
                     }
@@ -2806,7 +2823,7 @@
                         return false;
                     }
                     const data = await response.json();
-                    const submissions = data.submissions || [];
+                    const submissions = data || [];
                     if (!Array.isArray(submissions)) {
                         return false;
                     }
